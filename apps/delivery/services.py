@@ -20,21 +20,19 @@ def get_delivery_zones():
 
 def get_zone_for_address(address) -> DeliveryZone:
     """Get the delivery zone for an address based on ward number."""
-    try:
-        return DeliveryZone.objects.filter(
-            is_active=True,
-            ward_numbers__contains=address.ward_number
-        ).first()
-    except Exception:
-        return None
+    for zone in DeliveryZone.objects.filter(is_active=True):
+        if address.ward_number in (zone.ward_numbers or []):
+            return zone
+    return None
 
 
 def calculate_delivery_estimate(ward_number: int) -> dict:
     """Calculate delivery time and fee for a ward number."""
-    zone = DeliveryZone.objects.filter(
-        is_active=True,
-        ward_numbers__contains=ward_number
-    ).first()
+    zone = None
+    for z in DeliveryZone.objects.filter(is_active=True):
+        if ward_number in (z.ward_numbers or []):
+            zone = z
+            break
     
     if zone:
         return {
@@ -84,6 +82,9 @@ def assign_delivery(delivery_id: int, rider_id: int) -> tuple:
         rider = RiderProfile.objects.get(id=rider_id, is_available=True)
     except RiderProfile.DoesNotExist:
         return False, "Rider not found or not available"
+    
+    if not rider.can_accept_deliveries:
+        return False, f"Cannot assign: rider is not KYC verified (Status: {rider.get_kyc_status_display()})."
     
     # Calculate delivery fee for rider
     delivery_fee = calculate_delivery_fee_for_rider(delivery)
@@ -257,6 +258,9 @@ def accept_delivery(rider, delivery_id: int) -> tuple:
     """
     Rider accepts an available delivery.
     """
+    if not rider.can_accept_deliveries:
+        return False, f"KYC verification required ({rider.get_kyc_status_display()}). Complete KYC verification to accept delivery tasks."
+
     try:
         delivery = Delivery.objects.get(id=delivery_id, status='unassigned')
     except Delivery.DoesNotExist:

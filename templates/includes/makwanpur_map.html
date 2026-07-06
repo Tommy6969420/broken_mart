@@ -1,7 +1,7 @@
 {% comment %}
 Makwanpur District Nepal — Leaflet map — exact pinpointing delivery
 Center: Hetauda 27.4287, 85.0320
-Bounds restricted to Makwanpur district approx
+Bounds restricted to Makwanpur district approx (Lat: 27.15-27.65, Lon: 84.65-85.35)
 {% endcomment %}
 <div id="makwanpur-map-{{ map_id|default:'main' }}" style="height: {{ height|default:'380px' }};" class="w-full rounded-stall border border-neutral-300 z-10"></div>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
@@ -11,8 +11,17 @@ Bounds restricted to Makwanpur district approx
   const mapEl = 'makwanpur-map-{{ map_id|default:"main" }}';
   const defaultLat = {{ lat|default:"27.4287" }};
   const defaultLon = {{ lon|default:"85.0320" }};
+  const isReadonly = {{ readonly|default:"false"|lower }} === true;
+
+  const latInput = document.querySelector('input[name="latitude"], #id_latitude');
+  const lonInput = document.querySelector('input[name="longitude"], #id_longitude');
+  let initLat = latInput && latInput.value ? parseFloat(latInput.value) : defaultLat;
+  let initLon = lonInput && lonInput.value ? parseFloat(lonInput.value) : defaultLon;
+  if (isNaN(initLat)) initLat = defaultLat;
+  if (isNaN(initLon)) initLon = defaultLon;
+
   const map = L.map(mapEl, {
-    center: [defaultLat, defaultLon],
+    center: [initLat, initLon],
     zoom: {{ zoom|default:13 }},
     maxBounds: [[27.15, 84.65], [27.65, 85.35]], // Makwanpur district bounds approx
     maxBoundsViscosity: 0.8,
@@ -38,41 +47,73 @@ Bounds restricted to Makwanpur district approx
   });
 
   // draggable pin — delivery pinpointing
-  let pin = L.marker([defaultLat, defaultLon], {draggable: true}).addTo(map)
-    .bindPopup('Drag to exact delivery point<br><small>Makwanpur Mart Hetauda</small>').openPopup();
+  let pin = L.marker([initLat, initLon], {draggable: !isReadonly}).addTo(map);
+  if (!isReadonly) {
+    pin.bindPopup('Drag to exact delivery point inside Makwanpur District<br><small>Makwanpur Mart Hetauda</small>').openPopup();
+  } else {
+    pin.bindPopup('Exact Delivery GPS Pinpoint<br><small>Makwanpur District, Nepal</small>').openPopup();
+  }
 
-  function updateLatLng(e){
-    const ll = e.target ? e.target.getLatLng() : pin.getLatLng();
-    const latInput = document.querySelector('input[name="latitude"], #id_latitude');
-    const lonInput = document.querySelector('input[name="longitude"], #id_longitude');
-    if(latInput) latInput.value = ll.lat.toFixed(6);
-    if(lonInput) lonInput.value = ll.lng.toFixed(6);
+  function validateBounds(lat, lon) {
+    return lat >= 27.15 && lat <= 27.65 && lon >= 84.65 && lon <= 85.35;
+  }
+
+  function updateLatLng(newLat, newLon){
+    if (!validateBounds(newLat, newLon)) {
+      alert("Location outside Makwanpur District bounds! Delivery exact pinpointing is restricted to Makwanpur District, Nepal.");
+      return false;
+    }
+    pin.setLatLng([newLat, newLon]);
+    if(latInput) latInput.value = newLat.toFixed(6);
+    if(lonInput) lonInput.value = newLon.toFixed(6);
     // update text displays if present
     const latDisp = document.getElementById('lat-display');
     const lonDisp = document.getElementById('lon-display');
-    if(latDisp) latDisp.textContent = ll.lat.toFixed(6);
-    if(lonDisp) lonDisp.textContent = ll.lng.toFixed(6);
+    if(latDisp) latDisp.textContent = newLat.toFixed(6);
+    if(lonDisp) lonDisp.textContent = newLon.toFixed(6);
+    return true;
   }
-  pin.on('dragend', updateLatLng);
-  map.on('click', function(e){
-    pin.setLatLng(e.latlng);
-    updateLatLng({target: pin});
-  });
 
-  // try browser geolocation (with permission)
-  if(navigator.geolocation && {{ enable_geolocate|default:"true"|lower }}){
-    navigator.geolocation.getCurrentPosition(pos=>{
-      const userLat = pos.coords.latitude;
-      const userLon = pos.coords.longitude;
-      // only accept if inside Makwanpur bounds
-      if(userLat>27.15 && userLat<27.65 && userLon>84.65 && userLon<85.35){
-        map.setView([userLat, userLon], 15);
-        pin.setLatLng([userLat, userLon]);
-        updateLatLng({target: pin});
-        L.circle([userLat, userLon], {radius: pos.coords.accuracy, color:'#3D3763', fillOpacity:0.1, weight:1}).addTo(map)
-          .bindPopup('Your GPS location — adjust pin if needed');
+  if (!isReadonly) {
+    // initialize input values if inputs exist and empty
+    if (latInput && !latInput.value) latInput.value = initLat.toFixed(6);
+    if (lonInput && !lonInput.value) lonInput.value = initLon.toFixed(6);
+
+    let lastValidLat = initLat;
+    let lastValidLon = initLon;
+
+    pin.on('dragend', function(e){
+      const ll = pin.getLatLng();
+      if (updateLatLng(ll.lat, ll.lng)) {
+        lastValidLat = ll.lat;
+        lastValidLon = ll.lng;
+      } else {
+        pin.setLatLng([lastValidLat, lastValidLon]);
       }
-    }, ()=>{}, {enableHighAccuracy:true, timeout:5000});
+    });
+
+    map.on('click', function(e){
+      if (updateLatLng(e.latlng.lat, e.latlng.lng)) {
+        lastValidLat = e.latlng.lat;
+        lastValidLon = e.latlng.lng;
+      }
+    });
+
+    // try browser geolocation (with permission)
+    if(navigator.geolocation && {{ enable_geolocate|default:"true"|lower }}){
+      navigator.geolocation.getCurrentPosition(pos=>{
+        const userLat = pos.coords.latitude;
+        const userLon = pos.coords.longitude;
+        if(validateBounds(userLat, userLon)){
+          map.setView([userLat, userLon], 15);
+          updateLatLng(userLat, userLon);
+          lastValidLat = userLat;
+          lastValidLon = userLon;
+          L.circle([userLat, userLon], {radius: pos.coords.accuracy, color:'#3D3763', fillOpacity:0.1, weight:1}).addTo(map)
+            .bindPopup('Your GPS location inside Makwanpur District');
+        }
+      }, ()=>{}, {enableHighAccuracy:true, timeout:5000});
+    }
   }
 
   // expose for other scripts

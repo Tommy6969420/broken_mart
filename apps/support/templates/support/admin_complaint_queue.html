@@ -1,8 +1,83 @@
 {% extends "base.html" %}
-{% block title %}Admin Grievance Queue [Phase 2] — Makwanpur Mart{% endblock %}
+{% block title %}Admin Grievance Queue — Makwanpur Mart{% endblock %}
 {% block content %}
-<div class="space-y-6">
-    <h1 class="font-display font-bold text-3xl text-brand-green">Admin Dispute Resolution Queue [Phase 2]</h1>
-    <p class="text-xs text-neutral-600">Sorted by oldest unresolved complaint first to prevent SLA aging.</p>
+<div class="space-y-6 max-w-6xl mx-auto my-6">
+    <div class="bg-brand-green text-white p-6 rounded-stall shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <span class="bg-state-error text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase">Legal Compliance Queue</span>
+            <h1 class="font-display font-bold text-3xl mt-1 flex items-center gap-3">
+                ⚖️ Admin Dispute Resolution Queue
+            </h1>
+            <p class="text-xs text-neutral-300 mt-0.5">Nepal E-Commerce Act 2081 compliance • All customer formal grievances</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="{% url 'support:agent_console' %}" class="bg-white text-brand-green font-display font-bold px-4 py-2 rounded-stall text-xs shadow hover:bg-neutral-100">← Back to Live Support Console</a>
+        </div>
+    </div>
+
+    <!-- Status Filter Pills -->
+    <div class="flex gap-2 border-b pb-3 text-xs font-bold">
+        <a href="?status=all" class="px-4 py-2 rounded-stall {% if status_filter == 'all' %}bg-brand-green text-white shadow{% else %}bg-surface-base text-neutral-600 hover:bg-neutral-200{% endif %}">All ({{ status_counts.all }})</a>
+        <a href="?status=open" class="px-4 py-2 rounded-stall {% if status_filter == 'open' %}bg-brand-green text-white shadow{% else %}bg-surface-base text-neutral-600 hover:bg-neutral-200{% endif %}">Open ({{ status_counts.open }})</a>
+        <a href="?status=in_review" class="px-4 py-2 rounded-stall {% if status_filter == 'in_review' %}bg-brand-green text-white shadow{% else %}bg-surface-base text-neutral-600 hover:bg-neutral-200{% endif %}">In Review ({{ status_counts.in_review }})</a>
+        <a href="?status=resolved" class="px-4 py-2 rounded-stall {% if status_filter == 'resolved' %}bg-brand-green text-white shadow{% else %}bg-surface-base text-neutral-600 hover:bg-neutral-200{% endif %}">Resolved ({{ status_counts.resolved }})</a>
+    </div>
+
+    <!-- Complaints Queue List -->
+    <div class="space-y-4">
+        {% for c in complaints %}
+        <div class="bg-white p-6 rounded-stall border shadow-sm space-y-4 {% if c.status == 'open' %}border-l-4 border-state-warning{% elif c.status == 'resolved' %}border-l-4 border-state-success{% endif %}">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-3 gap-2">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-mono font-bold text-xs bg-surface-base border px-2 py-0.5 rounded">Dispute GR-{{ c.id }}</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase {% if c.status == 'resolved' %}bg-state-success/20 text-state-success{% else %}bg-state-warning/20 text-state-warning{% endif %}">{{ c.get_status_display }}</span>
+                    </div>
+                    <h3 class="font-display font-bold text-lg text-brand-green mt-1">Order #{{ c.order.order_number }} — Category: {{ c.get_category_display }}</h3>
+                </div>
+                <div class="text-xs text-neutral-500 text-right">
+                    <span>Filed by: <strong>{{ c.raised_by.email }}</strong></span><br>
+                    <span>{{ c.created_at|date:"M d, Y H:i" }}</span>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="text-sm bg-surface-base p-4 rounded border">
+                <strong class="text-xs text-neutral-500 uppercase block mb-1">Customer Grievance Details:</strong>
+                <p class="whitespace-pre-wrap">{{ c.description }}</p>
+            </div>
+
+            <!-- Resolution Section -->
+            {% if c.status == 'resolved' %}
+            <div class="p-4 bg-state-success/10 border border-state-success rounded text-sm">
+                <strong class="text-state-success block mb-1">✓ Mediator Resolution Notes ({{ c.resolved_at|date:"M d, Y" }}):</strong>
+                <p class="text-neutral-800 whitespace-pre-wrap">{{ c.resolution_notes }}</p>
+            </div>
+            {% else %}
+            <!-- Inline Resolution Form -->
+            <form action="{% url 'support:resolve_complaint' complaint_id=c.id %}" method="post" class="bg-neutral-50 p-4 rounded border space-y-3">
+                {% csrf_token %}
+                <strong class="block text-xs font-bold text-neutral-700 uppercase">Submit Mediator Resolution:</strong>
+                <textarea name="resolution_notes" required rows="2" placeholder="Detail the resolution agreement reached with vendor/customer..." class="w-full bg-white border rounded-stall p-2.5 text-xs focus:border-brand-green outline-none">{{ c.resolution_notes }}</textarea>
+                
+                <div class="flex justify-between items-center">
+                    <select name="status" class="bg-white border rounded px-3 py-1.5 text-xs font-semibold">
+                        <option value="resolved">Mark Resolved</option>
+                        <option value="in_review" {% if c.status == 'in_review' %}selected{% endif %}>Keep In Review</option>
+                        <option value="escalated" {% if c.status == 'escalated' %}selected{% endif %}>Escalate to Legal</option>
+                    </select>
+                    <button type="submit" class="bg-brand-green text-white font-display font-bold px-5 py-2 rounded-stall text-xs shadow hover:brightness-110">
+                        Submit Resolution Notes →
+                    </button>
+                </div>
+            </form>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="bg-white p-12 rounded-stall border text-center text-neutral-500">
+            No grievance complaints found matching this filter.
+        </div>
+        {% endfor %}
+    </div>
 </div>
 {% endblock %}

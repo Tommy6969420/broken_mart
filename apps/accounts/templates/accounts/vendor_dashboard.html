@@ -12,10 +12,10 @@
             <p class="text-xs text-neutral-300 mt-1">Vendor Operations Panel &bull; Year 1 Free Listing Active</p>
         </div>
         <div class="flex gap-2">
-            <a href="{% url 'catalog:vendor_product_form' %}" class="bg-brand-marigold text-surface-ink font-display font-bold px-4 py-2 rounded-stall text-sm shadow hover:brightness-105">
+            <a href="{% url 'catalog:vendor_product_create' %}" class="bg-brand-marigold text-surface-ink font-display font-bold px-4 py-2 rounded-stall text-sm shadow hover:brightness-105">
                 + Add New Product
             </a>
-            <a href="{% url 'catalog:vendor_storefront' slug='new-shrestha-cloth-store' %}" class="bg-white/10 text-white border border-white/30 font-display font-semibold px-4 py-2 rounded-stall text-sm">
+            <a href="{% url 'catalog:vendor_storefront' slug=vendor.shop_slug|default:'shrestha-cloth-store' %}" class="bg-white/10 text-white border border-white/30 font-display font-semibold px-4 py-2 rounded-stall text-sm">
                 View Live Storefront
             </a>
         </div>

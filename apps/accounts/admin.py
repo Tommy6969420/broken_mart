@@ -82,11 +82,32 @@ class VendorProfileAdmin(admin.ModelAdmin):
 class RiderProfileAdmin(admin.ModelAdmin):
     """Admin for RiderProfile model."""
     
-    list_display = ('__str__', 'user', 'vehicle_type', 'is_available', 'current_zone', 'total_deliveries')
-    list_filter = ('vehicle_type', 'is_available', 'current_zone')
-    search_fields = ('user__email', 'user__username')
-    raw_id_fields = ('user', 'current_zone')
-    readonly_fields = ('total_deliveries',)
+    list_display = ('__str__', 'user', 'vehicle_type', 'kyc_status', 'is_available', 'can_accept_deliveries', 'current_zone', 'total_deliveries')
+    list_filter = ('kyc_status', 'vehicle_type', 'is_available', 'is_banned', 'current_zone')
+    search_fields = ('user__email', 'user__username', 'citizenship_number', 'license_number')
+    raw_id_fields = ('user', 'current_zone', 'kyc_verified_by')
+    readonly_fields = ('total_deliveries', 'kyc_submitted_at', 'kyc_verified_at')
+    actions = ['verify_kyc', 'reject_kyc']
+
+    def verify_kyc(self, request, queryset):
+        from django.utils import timezone
+        updated = queryset.update(
+            kyc_status='verified',
+            kyc_verified_at=timezone.now(),
+            kyc_verified_by=request.user,
+            kyc_rejection_reason=''
+        )
+        self.message_user(request, f"{updated} riders marked KYC VERIFIED.")
+    verify_kyc.short_description = "✓ Mark selected riders as KYC VERIFIED"
+
+    def reject_kyc(self, request, queryset):
+        updated = queryset.update(
+            kyc_status='rejected',
+            is_available=False,
+            kyc_rejection_reason='Incomplete or invalid documents.'
+        )
+        self.message_user(request, f"{updated} riders marked KYC REJECTED.")
+    reject_kyc.short_description = "✗ Mark selected riders as KYC REJECTED"
 
 
 @admin.register(SellerReview)

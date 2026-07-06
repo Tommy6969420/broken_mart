@@ -1,18 +1,41 @@
 {% extends "base.html" %}
-{% block title %}Dispute #GR-104 Resolution — Makwanpur Mart{% endblock %}
+{% block title %}Dispute #GR-{{ complaint.id }} Resolution — Makwanpur Mart{% endblock %}
 {% block content %}
 <div class="max-w-3xl mx-auto bg-white p-8 rounded-stall border shadow-sm my-6 space-y-6">
     <div class="border-b pb-4 flex justify-between items-center">
-        <h1 class="font-display font-bold text-2xl text-brand-green">Dispute Record #GR-104</h1>
-        <span class="bg-state-success text-white font-bold text-xs px-3 py-1 rounded">Resolved</span>
+        <div>
+            <span class="font-mono font-bold text-xs bg-surface-base border px-2 py-0.5 rounded">Dispute Record #GR-{{ complaint.id }}</span>
+            <h1 class="font-display font-bold text-2xl text-brand-green mt-1">Order #{{ complaint.order.order_number }} Grievance</h1>
+        </div>
+        <span class="px-3 py-1 rounded text-xs font-bold uppercase {% if complaint.status == 'resolved' %}bg-state-success text-white{% elif complaint.status == 'open' %}bg-state-warning text-white{% else %}bg-brand-indigo text-white{% endif %}">{{ complaint.get_status_display }}</span>
+    </div>
+
+    <!-- Complaint Details -->
+    <div class="space-y-2 text-sm bg-surface-base p-5 rounded-stall border">
+        <div><strong>Category:</strong> {{ complaint.get_category_display }}</div>
+        <div><strong>Filed On:</strong> {{ complaint.created_at|date:"M d, Y H:i" }}</div>
+        <div class="pt-2 border-t">
+            <strong>Customer Description:</strong>
+            <p class="mt-1 text-neutral-800 whitespace-pre-wrap">{{ complaint.description }}</p>
+        </div>
     </div>
 
     <!-- NON-NEGOTIABLE ELEMENT: COMPLAINT RESOLUTION NOTES VISIBLE TO FILER -->
+    {% if complaint.resolution_notes %}
     <div class="p-6 bg-state-success/10 border-2 border-state-success rounded-stall space-y-2">
-        <strong class="block font-display text-lg text-state-success">Platform Mediator Resolution Notes (July 03, 2026):</strong>
-        <p class="text-sm text-neutral-800 leading-relaxed">
-            Our Hetauda mediator contacted vendor Shrestha Cloth Store directly regarding the damaged dupatta stitching. The vendor acknowledged the defect and our delivery rider Bikash Thapa successfully picked up the returned item and delivered an inspected replacement set to Ward #4. Dispute officially closed to customer satisfaction.
+        <strong class="block font-display text-lg text-state-success">Platform Mediator Resolution Notes{% if complaint.resolved_at %} ({{ complaint.resolved_at|date:"M d, Y" }}){% endif %}:</strong>
+        <p class="text-sm text-neutral-800 leading-relaxed whitespace-pre-wrap">
+            {{ complaint.resolution_notes }}
         </p>
+    </div>
+    {% else %}
+    <div class="p-6 bg-state-warning/10 border border-state-warning rounded-stall text-sm text-neutral-700">
+        ⏳ <strong>In Review:</strong> Our Hetauda support team is actively reviewing your grievance. Resolution notes will be displayed here as soon as our mediator reaches a decision.
+    </div>
+    {% endif %}
+
+    <div class="pt-4 flex justify-between items-center border-t">
+        <a href="{% url 'support:complaint_list' %}" class="bg-surface-base border px-4 py-2 rounded text-xs font-bold hover:bg-neutral-100">← Back to My Support List</a>
     </div>
 </div>
 {% endblock %}

@@ -60,12 +60,12 @@
                     <!-- Inline HTMX Quantity Adjuster -->
                     <div class="flex items-center gap-2 shrink-0" 
                          hx-target="closest .bg-white" hx-swap="outerHTML">
-                        <button hx-post="{% url 'orders:update_cart_item_ajax' %}" 
+                        <button hx-post="{% url 'orders:cart_update' %}" 
                                 hx-vals='{"item_id":"{{ item.id }}","quantity":{{ item.quantity|add:"-1" }}}'
                                 hx-include="[name='csrfmiddlewaretoken']"
                                 class="w-7 h-7 bg-surface-base border rounded text-xs font-bold hover:border-brand-green">-</button>
                         <span class="font-bold text-sm tabular-nums w-6 text-center">{{ item.quantity }}</span>
-                        <button hx-post="{% url 'orders:update_cart_item_ajax' %}"
+                        <button hx-post="{% url 'orders:cart_update' %}"
                                 hx-vals='{"item_id":"{{ item.id }}","quantity":{{ item.quantity|add:"1" }}}'
                                 hx-include="[name='csrfmiddlewaretoken']"
                                 class="w-7 h-7 bg-surface-base border rounded text-xs font-bold hover:border-brand-green">+</button>
@@ -74,7 +74,7 @@
                         {% with unit_price=item.variant.effective_price|default:item.product.effective_price %}
                         <span class="font-display font-bold text-base text-brand-green tabular-nums">NPR {% widthratio unit_price 1 item.quantity %}</span>
                         {% endwith %}
-                        <button hx-post="{% url 'orders:remove_cart_item_ajax' item.id %}"
+                        <button hx-post="{% url 'orders:cart_remove' item.id %}"
                                 hx-target="#cart-items-container"
                                 hx-confirm="Remove item?"
                                 class="block text-xs text-state-error hover:underline ml-auto">Remove</button>
@@ -155,7 +155,7 @@
             </div>
 
             <!-- coupon -->
-            <form hx-post="{% url 'orders:apply_coupon_ajax' %}" hx-target="#coupon-result" class="pt-3 border-t space-y-2">
+            <form hx-post="{% url 'orders:apply_coupon' %}" hx-target="#coupon-result" class="pt-3 border-t space-y-2">
                 {% csrf_token %}
                 <label class="text-xs font-bold text-neutral-700">Coupon code</label>
                 <div class="flex gap-2">

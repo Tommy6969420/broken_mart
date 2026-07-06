@@ -1,14 +1,75 @@
 {% extends "base.html" %}
-{% block title %}My Filed Grievances — Makwanpur Mart{% endblock %}
+{% block title %}My Support Tickets & Grievances — Makwanpur Mart{% endblock %}
 {% block content %}
-<div class="space-y-6 max-w-4xl mx-auto">
-    <h1 class="font-display font-bold text-3xl text-brand-green">My Filed Grievances &amp; Resolutions</h1>
-    <div class="bg-white p-6 rounded-stall border shadow-sm flex justify-between items-center text-sm">
+<div class="space-y-8 max-w-5xl mx-auto my-6">
+    <div class="border-b pb-4 flex justify-between items-center">
         <div>
-            <span class="bg-state-success text-white text-xs font-bold px-2.5 py-0.5 rounded">RESOLVED</span>
-            <h3 class="font-display font-bold text-lg mt-1">Dispute #GR-104: Return Policy Compliance</h3>
+            <h1 class="font-display font-bold text-3xl text-brand-green">My Support &amp; Dispute Portal</h1>
+            <p class="text-xs text-neutral-600">Track all your active customer support conversations and formal legal grievances.</p>
         </div>
-        <a href="{% url 'support:complaint_detail' complaint_id=104 %}" class="bg-brand-green text-white px-4 py-2 rounded-stall font-bold text-xs shadow">View Resolution Notes</a>
+        <a href="{% url 'support:complaint_form' %}" class="bg-brand-indigo text-white font-display font-bold px-5 py-2.5 rounded-stall text-sm shadow hover:brightness-110">
+            + File Formal Grievance
+        </a>
+    </div>
+
+    <!-- Section 1: Support & Live Chat Tickets -->
+    <div class="space-y-4">
+        <h2 class="font-display font-bold text-2xl text-brand-green">💬 My Support Tickets &amp; Live Chat Threads</h2>
+        {% if support_tickets %}
+        <div class="bg-white rounded-stall border shadow-sm divide-y">
+            {% for t in support_tickets %}
+            <div class="p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:bg-neutral-50 transition">
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                        <span class="font-mono font-bold text-xs bg-surface-base border px-2 py-0.5 rounded">{{ t.ticket_number }}</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase {% if t.status == 'open' or t.status == 'in_progress' %}bg-state-warning/20 text-state-warning{% elif t.status == 'resolved' %}bg-state-success/20 text-state-success{% else %}bg-neutral-200 text-neutral-700{% endif %}">{{ t.get_status_display }}</span>
+                        <span class="text-xs text-neutral-400">• {{ t.updated_at|timesince }} ago</span>
+                    </div>
+                    <h3 class="font-display font-bold text-base text-surface-ink">{{ t.subject }}</h3>
+                    <p class="text-xs text-neutral-500">Channel: {{ t.get_channel_display }} {% if t.order %}• Order #{{ t.order.order_number }}{% endif %}</p>
+                </div>
+                <a href="{% url 'support:ticket_detail' ticket_id=t.id %}" class="bg-brand-green text-white px-5 py-2 rounded-stall font-bold text-xs shadow hover:brightness-110">
+                    Open Thread &amp; Reply →
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="bg-white p-6 rounded-stall border text-center text-sm text-neutral-500">
+            No support tickets created yet. Use the chat bubble in the bottom right to talk with our team!
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Section 2: Formal Grievances (E-Commerce Act 2081) -->
+    <div class="space-y-4">
+        <h2 class="font-display font-bold text-2xl text-brand-green">⚖️ Formal Grievances (Nepal E-Commerce Act 2081)</h2>
+        {% if complaints %}
+        <div class="bg-white rounded-stall border shadow-sm divide-y">
+            {% for c in complaints %}
+            <div class="p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:bg-neutral-50 transition">
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                        <span class="font-mono font-bold text-xs bg-surface-base border px-2 py-0.5 rounded">GR-{{ c.id }}</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase {% if c.status == 'open' %}bg-state-warning/20 text-state-warning{% elif c.status == 'resolved' %}bg-state-success/20 text-state-success{% else %}bg-brand-indigo/20 text-brand-indigo{% endif %}">{{ c.get_status_display }}</span>
+                        <span class="text-xs text-neutral-400">• Order #{{ c.order.order_number }}</span>
+                    </div>
+                    <h3 class="font-display font-bold text-base text-surface-ink">{{ c.get_category_display }}: {{ c.description|truncatechars:80 }}</h3>
+                    {% if c.resolution_notes %}
+                    <p class="text-xs text-state-success font-bold mt-1">✓ Mediator Resolution: {{ c.resolution_notes|truncatechars:100 }}</p>
+                    {% endif %}
+                </div>
+                <a href="{% url 'support:complaint_detail' complaint_id=c.id %}" class="bg-surface-base border px-4 py-2 rounded-stall font-bold text-xs hover:bg-neutral-100">
+                    Inspect Dispute Record
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="bg-white p-6 rounded-stall border text-center text-sm text-neutral-500">
+            No formal legal grievances filed.
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

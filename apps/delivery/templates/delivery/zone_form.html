@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{% if zone %}Edit{% else %}Create{% endif %} Delivery Zone — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white p-8 rounded-stall border shadow-sm my-6 space-y-6">
+    <div class="border-b pb-4 flex justify-between items-center">
+        <h1 class="font-display font-bold text-2xl text-brand-green">{% if zone %}Edit Zone: {{ zone.name }}{% else %}Create Delivery Zone{% endif %}</h1>
+        <a href="{% url 'delivery:zone_list' %}" class="text-xs text-brand-indigo font-bold hover:underline">← Back to Zones</a>
+    </div>
+
+    <form method="post" class="space-y-5">
+        {% csrf_token %}
+        <div>
+            <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Zone Name *</label>
+            {{ form.name }}
+            {{ form.name.errors }}
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Ward Numbers *</label>
+            {{ form.ward_numbers }}
+            {{ form.ward_numbers.errors }}
+            <p class="text-[10px] text-neutral-500 mt-0.5">{{ form.ward_numbers.help_text }}</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Base Delivery Fee (NPR) *</label>
+                {{ form.base_delivery_fee }}
+                {{ form.base_delivery_fee.errors }}
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Est. Time (Minutes) *</label>
+                {{ form.estimated_delivery_time_minutes }}
+                {{ form.estimated_delivery_time_minutes.errors }}
+            </div>
+        </div>
+        <div class="pt-2">
+            <label class="flex items-center gap-2 text-sm bg-surface-base border rounded-stall p-3 cursor-pointer">
+                {{ form.is_active }}
+                <span class="font-semibold">Active Zone</span>
+            </label>
+        </div>
+
+        <div class="pt-4 border-t flex justify-end gap-3">
+            <a href="{% url 'delivery:zone_list' %}" class="px-5 py-2 border rounded-stall text-sm font-semibold hover:bg-surface-base">Cancel</a>
+            <button type="submit" class="bg-brand-green text-white font-display font-bold px-6 py-2.5 rounded-stall shadow hover:brightness-110">
+                {% if zone %}Update Zone{% else %}Save Zone{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -171,7 +171,7 @@
             </div>
 
             <!-- Add to Cart CTA — streamlined -->
-            <form method="post" action="{% url 'orders:add_to_cart_ajax' %}" hx-post="{% url 'orders:add_to_cart_ajax' %}" hx-target="#cart-toast" hx-swap="innerHTML" class="pt-2 space-y-3 border-t">
+            <form method="post" action="{% url 'orders:cart_add' %}" hx-post="{% url 'orders:cart_add' %}" hx-target="#cart-toast" hx-swap="innerHTML" class="pt-2 space-y-3 border-t">
                 {% csrf_token %}
                 <input type="hidden" name="product_id" value="{{ product.id }}">
                 <input type="hidden" name="variant_id" :value="selectedVariant">
@@ -183,7 +183,7 @@
                     <button type="submit" class="flex-grow bg-brand-marigold text-surface-ink font-display font-bold text-lg py-3 rounded-stall hover:brightness-105 transition shadow-md flex items-center justify-center gap-2">
                         <span>🛒 Add to Cart — NPR {{ product.effective_price }}</span>
                     </button>
-                    <button type="button" hx-post="{% url 'catalog:toggle_wishlist_ajax' %}" hx-vals='{"product_id": "{{ product.id }}"}' class="px-4 border rounded-stall text-xl hover:bg-surface-base">♡</button>
+                    <button type="button" hx-post="{% url 'catalog:wishlist_toggle' %}" hx-vals='{"product_id": "{{ product.id }}"}' class="px-4 border rounded-stall text-xl hover:bg-surface-base">♡</button>
                 </div>
                 <div id="cart-toast" class="text-xs"></div>
                 <p class="text-[11px] text-neutral-500 text-center">Secure checkout • 2-step • eSewa / Khalti / COD • VAT invoice included</p>

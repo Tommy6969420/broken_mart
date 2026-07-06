@@ -15,7 +15,7 @@ from django.views.decorators.http import require_http_methods, require_POST
 from django.views.generic import DetailView, ListView, TemplateView, View
 
 from .forms import ComplaintResolutionForm, GrievanceComplaintForm
-from .models import AuditLog, GrievanceComplaint, Notification
+from .models import AuditLog, GrievanceComplaint, Notification, SupportTicket, TicketMessage, LiveChatSession
 from .services import (
     create_complaint, get_faq_categories, get_model_audit_trail, 
     get_pending_complaints, get_unread_notification_count, get_user_complaints,
@@ -90,7 +90,7 @@ class ComplaintFormView(LoginRequiredMixin, View):
 
 
 class ComplaintListView(LoginRequiredMixin, ListView):
-    """List user's complaints."""
+    """List user's complaints and support tickets."""
     
     model = GrievanceComplaint
     template_name = 'support/complaint_list.html'
@@ -99,6 +99,11 @@ class ComplaintListView(LoginRequiredMixin, ListView):
     
     def get_queryset(self):
         return get_user_complaints(self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['support_tickets'] = SupportTicket.objects.filter(user=self.request.user).order_by('-updated_at')
+        return context
 
 
 class ComplaintDetailView(LoginRequiredMixin, View):
@@ -395,3 +400,137 @@ def chat_send_ajax(request):
     </div>
     '''
     return HttpResponse(mark_safe(customer_html))
+
+
+# =============================================================================
+# Support Team Agent Console & Persistent Ticket Views
+# =============================================================================
+
+class AgentSupportConsoleView(LoginRequiredMixin, View):
+    """Support Team Agent Console — easy access interface for support staff to chat & manage tickets."""
+    template_name = 'support/agent_console.html'
+
+    def get(self, request, ticket_id=None):
+        if not request.user.is_staff and request.user.role != User.Role.ADMIN:
+            raise PermissionDenied("Support agent access required.")
+
+        status_filter = request.GET.get('status', 'open')
+        tickets_qs = SupportTicket.objects.select_related('user', 'order', 'assigned_to').order_by('-updated_at')
+
+        if status_filter != 'all':
+            if status_filter == 'open':
+                tickets_qs = tickets_qs.filter(status__in=[SupportTicket.Status.OPEN, SupportTicket.Status.WAITING_CUSTOMER, SupportTicket.Status.IN_PROGRESS])
+            else:
+                tickets_qs = tickets_qs.filter(status=status_filter)
+
+        active_ticket = None
+        if ticket_id:
+            active_ticket = get_object_or_404(SupportTicket, id=ticket_id)
+        elif tickets_qs.exists():
+            active_ticket = tickets_qs.first()
+
+        messages_list = []
+        if active_ticket:
+            messages_list = active_ticket.messages.select_related('sender').order_by('created_at')
+
+        context = {
+            'tickets': tickets_qs[:50],
+            'active_ticket': active_ticket,
+            'messages_list': messages_list,
+            'status_filter': status_filter,
+            'stats': {
+                'open_count': SupportTicket.objects.filter(status=SupportTicket.Status.OPEN).count(),
+                'in_progress_count': SupportTicket.objects.filter(status=SupportTicket.Status.IN_PROGRESS).count(),
+                'waiting_count': SupportTicket.objects.filter(status=SupportTicket.Status.WAITING_CUSTOMER).count(),
+                'grievance_count': GrievanceComplaint.objects.filter(status='open').count(),
+            }
+        }
+        return render(request, self.template_name, context)
+
+
+@require_POST
+@login_required
+def agent_ticket_reply(request, ticket_id):
+    """Support Agent replies to a ticket or live chat thread."""
+    if not request.user.is_staff and request.user.role != User.Role.ADMIN:
+        raise PermissionDenied("Support agent access required.")
+
+    ticket = get_object_or_404(SupportTicket, id=ticket_id)
+    msg_text = request.POST.get('message', '').strip()
+    is_internal = request.POST.get('is_internal_note') == '1'
+    new_status = request.POST.get('status', SupportTicket.Status.WAITING_CUSTOMER)
+
+    if msg_text:
+        TicketMessage.objects.create(
+            ticket=ticket,
+            sender=request.user,
+            sender_type=TicketMessage.SenderType.AGENT,
+            sender_name=request.user.get_full_name() or request.user.username or 'Support Agent',
+            message=msg_text,
+            is_internal_note=is_internal
+        )
+        if not is_internal:
+            ticket.status = new_status
+            if not ticket.first_response_at:
+                ticket.first_response_at = timezone.now()
+        ticket.assigned_to = request.user
+        ticket.save(update_fields=['status', 'first_response_at', 'assigned_to', 'updated_at'])
+        messages.success(request, f'Reply sent to ticket #{ticket.ticket_number}.')
+
+    return redirect('support:agent_console_ticket', ticket_id=ticket.id)
+
+
+@require_POST
+@login_required
+def agent_ticket_update_status(request, ticket_id):
+    """Support Agent updates status or assigns ticket."""
+    if not request.user.is_staff and request.user.role != User.Role.ADMIN:
+        raise PermissionDenied("Support agent access required.")
+
+    ticket = get_object_or_404(SupportTicket, id=ticket_id)
+    status = request.POST.get('status')
+    assign_me = request.POST.get('assign_me') == '1'
+
+    if status and status in dict(SupportTicket.Status.choices):
+        ticket.status = status
+        if status == SupportTicket.Status.RESOLVED:
+            ticket.resolved_at = timezone.now()
+        ticket.save(update_fields=['status', 'resolved_at', 'updated_at'])
+        messages.success(request, f'Ticket #{ticket.ticket_number} status updated to {ticket.get_status_display()}.')
+
+    if assign_me:
+        ticket.assigned_to = request.user
+        ticket.save(update_fields=['assigned_to', 'updated_at'])
+        messages.success(request, f'Assigned ticket #{ticket.ticket_number} to yourself.')
+
+    return redirect('support:agent_console_ticket', ticket_id=ticket.id)
+
+
+class SupportTicketDetailView(LoginRequiredMixin, View):
+    """Customer view of persistent support ticket thread."""
+    template_name = 'support/ticket_detail.html'
+
+    def get(self, request, ticket_id):
+        ticket = get_object_or_404(SupportTicket, id=ticket_id, user=request.user)
+        messages_list = ticket.messages.filter(is_internal_note=False).order_by('created_at')
+        return render(request, self.template_name, {'ticket': ticket, 'messages_list': messages_list})
+
+
+@require_POST
+@login_required
+def ticket_customer_reply(request, ticket_id):
+    """Customer replies to their support ticket thread."""
+    ticket = get_object_or_404(SupportTicket, id=ticket_id, user=request.user)
+    msg_text = request.POST.get('message', '').strip()
+    if msg_text:
+        TicketMessage.objects.create(
+            ticket=ticket,
+            sender=request.user,
+            sender_type=TicketMessage.SenderType.CUSTOMER,
+            sender_name=request.user.get_full_name() or request.user.username,
+            message=msg_text
+        )
+        ticket.status = SupportTicket.Status.OPEN
+        ticket.save(update_fields=['status', 'updated_at'])
+        messages.success(request, 'Message sent!')
+    return redirect('support:ticket_detail', ticket_id=ticket.id)

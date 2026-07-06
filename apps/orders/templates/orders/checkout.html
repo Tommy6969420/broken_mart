@@ -4,30 +4,64 @@
 <div class="max-w-5xl mx-auto space-y-8" x-data="{ payMethod: 'cod' }">
     <div class="border-b pb-4">
         <h1 class="font-display font-bold text-3xl text-brand-green">Checkout &amp; Delivery Dispatch</h1>
-        <p class="text-sm text-neutral-600">Review your Hetauda ward address and select your payment method.</p>
+        <p class="text-sm text-neutral-600">Review your Hetauda delivery address with exact GPS coordinates and select your payment method.</p>
     </div>
 
-    <form action="{% url 'orders:order_confirmation' %}" method="post" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    {% if form.errors or messages %}
+    <div class="space-y-2">
+        {% if form.errors %}
+        <div class="bg-state-error/10 border border-state-error text-state-error p-3 rounded-stall text-sm">
+            Please fix the errors below and submit again.
+            {{ form.errors }}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <form action="{% url 'orders:checkout' %}" method="post" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {% csrf_token %}
         <!-- Left: Address & Payment Selection -->
         <div class="lg:col-span-2 space-y-6">
             <!-- Step 1: Address Selection Inline -->
             <div class="bg-white p-6 rounded-stall border border-neutral-200 shadow-sm space-y-4">
                 <div class="flex justify-between items-center border-b pb-3">
-                    <h2 class="font-display font-bold text-lg text-brand-green">1. Delivery Address (Hetauda)</h2>
-                    <a href="{% url 'accounts:address_form' %}" class="text-xs font-bold text-brand-indigo hover:underline">+ Add New Address Inline</a>
+                    <h2 class="font-display font-bold text-lg text-brand-green">1. Delivery Address (Hetauda / Makwanpur)</h2>
+                    <a href="{% url 'accounts:address_create' %}" class="text-xs font-bold text-brand-indigo hover:underline">+ Add New Address Inline</a>
                 </div>
-                <!-- Address Radio Card -->
-                <label class="block p-4 rounded-stall border-2 border-brand-green bg-brand-green/5 cursor-pointer">
-                    <div class="flex justify-between items-start">
-                        <div class="flex items-center gap-2">
-                            <input type="radio" name="address_id" value="1" checked class="text-brand-green">
-                            <span class="font-display font-bold text-base text-surface-ink">Ram Shrestha (Home - Ward #4)</span>
-                        </div>
-                        <span class="bg-brand-marigold text-surface-ink text-[10px] px-2 py-0.5 stall-flag">Default</span>
+                
+                {% if addresses %}
+                    <div class="space-y-3">
+                    {% for addr in addresses %}
+                        <label class="block p-4 rounded-stall border-2 cursor-pointer transition {% if form.address.value|stringformat:'s' == addr.id|stringformat:'s' or forloop.first %}border-brand-green bg-brand-green/5{% else %}border-neutral-200 bg-white hover:border-neutral-300{% endif %}">
+                            <div class="flex justify-between items-start">
+                                <div class="flex items-center gap-2">
+                                    <input type="radio" name="address" value="{{ addr.id }}" {% if form.address.value|stringformat:'s' == addr.id|stringformat:'s' or not form.address.value and forloop.first %}checked{% endif %} class="text-brand-green">
+                                    <span class="font-display font-bold text-base text-surface-ink">{{ addr.label }} — Ward #{{ addr.ward_number }} ({{ addr.municipality }})</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    {% if addr.latitude and addr.longitude %}
+                                    <span class="bg-brand-green text-white text-[10px] px-2 py-0.5 rounded font-bold">📍 GPS Pin Attached</span>
+                                    {% else %}
+                                    <span class="bg-neutral-200 text-neutral-600 text-[10px] px-2 py-0.5 rounded font-bold">No GPS Pin</span>
+                                    {% endif %}
+                                    {% if addr.is_default %}
+                                    <span class="bg-brand-marigold text-surface-ink text-[10px] px-2 py-0.5 stall-flag">Default</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <p class="text-xs text-neutral-700 mt-2 ml-5">{{ addr.full_address }} &bull; <strong>Landmark:</strong> {{ addr.landmark|default:"None specified" }}</p>
+                            {% if addr.latitude and addr.longitude %}
+                            <p class="text-[11px] text-brand-indigo font-mono mt-1 ml-5">Exact coordinates: {{ addr.latitude }}, {{ addr.longitude }} (Hyperlocal Pinpointing)</p>
+                            {% endif %}
+                        </label>
+                    {% endfor %}
                     </div>
-                    <p class="text-xs text-neutral-700 mt-2 ml-5">Main Bazaar Road &bull; <strong>Landmark:</strong> Opposite Pashupati Temple Gate</p>
-                    <p class="text-xs text-neutral-500 mt-0.5 ml-5 tabular-nums">Contact: +977 9845123456</p>
-                </label>
+                {% else %}
+                    <div class="p-6 bg-surface-base border rounded text-center text-sm text-neutral-600">
+                        No delivery addresses saved yet.<br>
+                        <a href="{% url 'accounts:address_create' %}" class="inline-block mt-2 bg-brand-green text-white font-bold px-5 py-2 rounded text-xs shadow">+ Create Delivery Address with Map Pin</a>
+                    </div>
+                {% endif %}
             </div>
 
             <!-- Step 2: Payment Method Selection (EQUALLY PROMINENT COD VS DIGITAL) -->
@@ -43,7 +77,7 @@
                             <span class="font-display font-bold text-base text-surface-ink block">Cash on Delivery</span>
                             <span class="text-[11px] text-neutral-600">Pay cash or QR to rider upon inspecting doorstep package</span>
                         </div>
-                        <input type="radio" name="payment_method" value="COD" checked class="mx-auto text-brand-marigold">
+                        <input type="radio" name="payment_method" value="cod" checked class="mx-auto text-brand-marigold">
                     </label>
 
                     <!-- Choice 2: eSewa Digital Wallet -->
@@ -53,17 +87,17 @@
                             <span class="font-display font-bold text-base text-surface-ink block">eSewa Mobile Wallet</span>
                             <span class="text-[11px] text-neutral-600">NRB-approved instant digital payment redirection</span>
                         </div>
-                        <input type="radio" name="payment_method" value="ESEWA" class="mx-auto text-state-success">
+                        <input type="radio" name="payment_method" value="esewa" class="mx-auto text-state-success">
                     </label>
 
                     <!-- Choice 3: Khalti Digital Wallet -->
                     <label @click="payMethod = 'khalti'" :class="payMethod === 'khalti' ? 'border-brand-indigo bg-brand-indigo/10 shadow-md' : 'border-neutral-200 bg-white'" class="p-5 rounded-stall border-2 cursor-pointer transition flex flex-col justify-between text-center space-y-3">
                         <div class="text-3xl">🟣</div>
                         <div>
-                            <span class="font-display font-bold text-base text-surface-ink block">Khalti Wallet [Phase 2]</span>
+                            <span class="font-display font-bold text-base text-surface-ink block">Khalti Digital Wallet</span>
                             <span class="text-[11px] text-neutral-600">Secure gateway verification with reward points</span>
                         </div>
-                        <input type="radio" name="payment_method" value="KHALTI" class="mx-auto text-brand-indigo">
+                        <input type="radio" name="payment_method" value="khalti" class="mx-auto text-brand-indigo">
                     </label>
                 </div>
             </div>
@@ -71,45 +105,41 @@
             <!-- Step 3: Special Delivery Instructions -->
             <div class="bg-white p-6 rounded-stall border border-neutral-200 shadow-sm space-y-3">
                 <label class="block font-display font-bold text-sm text-surface-ink">Special Delivery / Rider Instructions (Optional)</label>
-                <textarea name="notes" rows="2" placeholder="E.g., Please ring top bell, leave package with shop downstairs if absent..." class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2 text-sm"></textarea>
+                <textarea name="special_instructions" rows="2" placeholder="E.g., Please ring top bell, leave package with shop downstairs if absent..." class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2 text-sm">{{ form.special_instructions.value|default:"" }}</textarea>
             </div>
         </div>
 
         <!-- Right: Order Summary Recap -->
         <div class="bg-white p-6 rounded-stall border border-neutral-200 shadow-sm h-fit space-y-4">
-            <h3 class="font-display font-bold text-lg text-brand-green border-b pb-3">Final Recap</h3>
+            <h3 class="font-display font-bold text-lg text-brand-green border-b pb-3">Order Summary</h3>
+            
             <div class="space-y-3 text-sm divide-y">
+                {% for item in cart_items %}
                 <div class="py-1 flex justify-between text-xs">
-                    <span>1x Traditional Kurta Set (Ward 4)</span>
-                    <span class="font-semibold tabular-nums">NPR 1,850</span>
+                    <span>{{ item.quantity }}x {{ item.product.title }}{% if item.variant %} ({{ item.variant.name }}){% endif %}</span>
+                    <span class="font-semibold tabular-nums">NPR {{ item.get_total }}</span>
                 </div>
-                <div class="py-1 flex justify-between text-xs">
-                    <span>1x Organic Face Glow Oil (Ward 2)</span>
-                    <span class="font-semibold tabular-nums">NPR 950</span>
-                </div>
+                {% empty %}
+                <div class="text-xs text-neutral-500 py-2">No items in cart.</div>
+                {% endfor %}
             </div>
 
-            <!-- Transparent Fee Breakdown (DELIVERY FEE AS DISTINCT LINE ITEM) -->
+            <!-- Transparent Fee Breakdown -->
             <div class="space-y-2 pt-2 border-t text-sm">
                 <div class="flex justify-between">
-                    <span class="text-neutral-600">Subtotal (2 items)</span>
-                    <span class="tabular-nums font-semibold">NPR 2,800</span>
+                    <span class="text-neutral-600">Subtotal</span>
+                    <span class="tabular-nums font-semibold">NPR {{ subtotal }}</span>
                 </div>
-                <div class="flex justify-between text-brand-indigo font-bold bg-brand-indigo/5 p-2 rounded">
-                    <span>🛵 Local Delivery Fee (Ward 4 drop)</span>
-                    <span class="tabular-nums">NPR 100</span>
+                <div class="flex justify-between text-brand-indigo font-bold bg-brand-indigo/5 p-2 rounded text-xs">
+                    <span>🛵 Delivery Fee (Ward calculated)</span>
+                    <span class="tabular-nums">Calculated on address</span>
                 </div>
             </div>
 
-            <div class="border-t pt-3 flex justify-between items-baseline">
-                <span class="font-display font-bold text-lg text-surface-ink">Total Payable</span>
-                <span class="font-display font-bold text-3xl text-brand-green tabular-nums">NPR 2,900</span>
-            </div>
-
-            <button type="submit" class="w-full bg-brand-green text-white font-display font-bold text-lg py-3.5 rounded-stall hover:brightness-110 transition shadow-lg">
+            <button type="submit" class="w-full bg-brand-green text-white font-display font-bold text-lg py-3.5 rounded-stall hover:brightness-110 transition shadow-lg disabled:opacity-50" {% if not addresses or not cart_items %}disabled{% endif %}>
                 Place Verified Order Now
             </button>
-            <p class="text-[11px] text-neutral-500 text-center">By placing this order, you acknowledge vendor return rules and delivery terms.</p>
+            <p class="text-[11px] text-neutral-500 text-center">By placing this order, your exact GPS coordinates and landmark will be securely shared with the Makwanpur Mart delivery partner assigned to your zone.</p>
         </div>
     </form>
 </div>

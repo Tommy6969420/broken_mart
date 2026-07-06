@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Ticket #{{ ticket.ticket_number }} — Makwanpur Mart Support{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6 my-6">
+    <div class="bg-white p-6 rounded-stall border shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <div class="flex items-center gap-2">
+                <span class="font-mono font-bold text-xs bg-surface-base border px-2.5 py-0.5 rounded">{{ ticket.ticket_number }}</span>
+                <span class="px-2.5 py-0.5 rounded text-xs font-bold uppercase {% if ticket.status == 'open' or ticket.status == 'in_progress' %}bg-state-warning/20 text-state-warning{% elif ticket.status == 'resolved' %}bg-state-success/20 text-state-success{% else %}bg-neutral-200 text-neutral-700{% endif %}">{{ ticket.get_status_display }}</span>
+            </div>
+            <h1 class="font-display font-bold text-2xl text-brand-green mt-1">{{ ticket.subject }}</h1>
+            <p class="text-xs text-neutral-500">Created: {{ ticket.created_at|date:"M d, Y H:i" }} • Channel: {{ ticket.get_channel_display }}</p>
+        </div>
+        <a href="{% url 'support:complaint_list' %}" class="bg-surface-base border px-4 py-2 rounded text-xs font-bold hover:bg-neutral-100">← Back to My Support Tickets</a>
+    </div>
+
+    <!-- Conversation Thread -->
+    <div class="bg-white rounded-stall border shadow-sm p-6 space-y-4">
+        <h3 class="font-display font-bold text-lg text-brand-green border-b pb-2">Conversation Thread</h3>
+        <div class="space-y-4 max-h-[500px] overflow-y-auto p-2">
+            {% for m in messages_list %}
+            <div class="flex flex-col {% if m.sender_type == 'customer' %}items-end{% else %}items-start{% endif %}">
+                <div class="max-w-[80%] rounded-stall p-3.5 text-sm shadow-sm {% if m.sender_type == 'customer' %}bg-brand-marigold/20 border border-brand-marigold/50 text-neutral-900{% elif m.sender_type == 'bot' %}bg-neutral-100 text-neutral-700 text-xs text-center border{% else %}bg-brand-green text-white{% endif %}">
+                    <div class="flex justify-between items-center gap-4 mb-1 border-b {% if m.sender_type == 'agent' %}border-white/20{% else %}border-neutral-300{% endif %} pb-1 text-xs">
+                        <span class="font-bold">{% if m.sender_type == 'customer' %}You{% else %}{{ m.sender_name|default:"Support Team" }}{% endif %}</span>
+                        <span class="text-[10px] opacity-75">{{ m.created_at|date:"M d, H:i" }}</span>
+                    </div>
+                    <div class="whitespace-pre-wrap leading-relaxed">{{ m.message }}</div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-8 text-sm text-neutral-500">No messages in this ticket yet.</div>
+            {% endfor %}
+        </div>
+
+        {% if ticket.status != 'closed' and ticket.status != 'resolved' %}
+        <form action="{% url 'support:ticket_customer_reply' ticket_id=ticket.id %}" method="post" class="border-t pt-4 space-y-3">
+            {% csrf_token %}
+            <label class="block font-display font-bold text-sm text-neutral-700">Add a Reply to Support Agent:</label>
+            <textarea name="message" required rows="3" placeholder="Type your message here..." class="w-full bg-surface-base border border-neutral-300 rounded-stall p-3 text-sm focus:border-brand-green outline-none"></textarea>
+            <button type="submit" class="bg-brand-green text-white font-display font-bold px-6 py-2.5 rounded-stall text-sm shadow hover:brightness-110">
+                Send Reply →
+            </button>
+        </form>
+        {% else %}
+        <div class="border-t pt-4 text-center text-sm text-neutral-600">
+            This ticket is marked as <strong>{{ ticket.get_status_display }}</strong>. If you still need help, please file a new ticket or use our live chat.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

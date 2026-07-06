@@ -167,21 +167,19 @@ def calculate_delivery_fee(address):
     """
     from apps.delivery.models import DeliveryZone
     
-    try:
-        zone = DeliveryZone.objects.filter(
-            is_active=True,
-            ward_numbers__contains=address.ward_number
-        ).first()
-        
-        if zone:
-            return {
-                'deliverable': True,
-                'fee': zone.base_delivery_fee,
-                'estimated_minutes': zone.estimated_delivery_time_minutes,
-                'zone_name': zone.name,
-            }
-    except Exception:
-        pass
+    zone = None
+    for z in DeliveryZone.objects.filter(is_active=True):
+        if address.ward_number in (z.ward_numbers or []):
+            zone = z
+            break
+    
+    if zone:
+        return {
+            'deliverable': True,
+            'fee': zone.base_delivery_fee,
+            'estimated_minutes': zone.estimated_delivery_time_minutes,
+            'zone_name': zone.name,
+        }
     
     return {
         'deliverable': False,
@@ -326,6 +324,14 @@ def place_order(user, address, payment_method, coupon_code=None, special_instruc
         gateway=payment_method,
         amount=total_amount,
         status=Transaction.Status.INITIATED
+    )
+
+    # Create unassigned delivery record for rider dispatch pool
+    from apps.delivery.models import Delivery
+    Delivery.objects.create(
+        order=order,
+        status=Delivery.Status.UNASSIGNED,
+        delivery_fee_owed_to_rider=Decimal('0.00')
     )
     
     # Clear cart

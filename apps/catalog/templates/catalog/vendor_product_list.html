@@ -1,51 +1,64 @@
 {% extends "base.html" %}
-{% block title %}Manage Inventory — Makwanpur Mart{% endblock %}
+{% block title %}Stall Inventory — Makwanpur Mart{% endblock %}
 {% block content %}
-<div class="space-y-6">
-    <div class="flex justify-between items-center bg-white p-6 rounded-stall border border-neutral-200 shadow-sm">
+<div class="max-w-6xl mx-auto space-y-6 my-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-6 rounded-stall border border-neutral-200 shadow-sm gap-4">
         <div>
             <h1 class="font-display font-bold text-2xl text-brand-green">Stall Inventory Table</h1>
-            <p class="text-xs text-neutral-500">Toggle active/inactive status live with one click.</p>
+            <p class="text-xs text-neutral-500">Manage products for stall: <strong>{{ vendor.shop_name }}</strong></p>
         </div>
-        <a href="{% url 'catalog:vendor_product_form' %}" class="bg-brand-marigold text-surface-ink font-display font-bold px-4 py-2 rounded-stall text-sm shadow">
-            + Add Product
-        </a>
+        <div class="flex gap-2">
+            <a href="{% url 'accounts:vendor_dashboard' %}" class="bg-surface-base border px-4 py-2 rounded-stall text-sm font-bold hover:bg-neutral-100">← Vendor Dashboard</a>
+            <a href="{% url 'catalog:vendor_product_create' %}" class="bg-brand-marigold text-surface-ink font-display font-bold px-4 py-2 rounded-stall text-sm shadow hover:brightness-105">
+                + Add New Product
+            </a>
+        </div>
     </div>
 
     <div class="bg-white rounded-stall border border-neutral-200 overflow-hidden shadow-sm">
         <table class="w-full text-left text-sm">
-            <thead class="bg-surface-base border-b text-xs font-bold text-neutral-700 uppercase">
+            <thead class="bg-surface-base border-b text-xs uppercase text-neutral-500 font-display">
                 <tr>
-                    <th class="p-4">Product Name</th>
+                    <th class="p-4">Product Title</th>
+                    <th class="p-4">Category</th>
                     <th class="p-4">Price (NPR)</th>
-                    <th class="p-4">Stock Level</th>
-                    <th class="p-4">Live Toggle</th>
+                    <th class="p-4">Stock</th>
+                    <th class="p-4">Moderation Status</th>
                     <th class="p-4 text-right">Actions</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-neutral-200">
-                <tr>
-                    <td class="p-4 font-display font-bold text-surface-ink">Traditional Cotton Kurta Set</td>
-                    <td class="p-4 tabular-nums font-semibold">NPR 1,850</td>
-                    <td class="p-4"><span class="bg-state-success/15 text-state-success px-2 py-0.5 rounded text-xs font-bold">12 Units</span></td>
+            <tbody class="divide-y text-xs">
+                {% for p in products %}
+                <tr class="hover:bg-neutral-50">
+                    <td class="p-4 font-display font-bold text-surface-ink">{{ p.name }}</td>
+                    <td class="p-4">{{ p.category.name }}</td>
+                    <td class="p-4 tabular-nums font-semibold">NPR {{ p.effective_price }}</td>
                     <td class="p-4">
-                        <button hx-post="#" class="bg-state-success text-white px-3 py-1 rounded-stall text-xs font-bold shadow">🟢 ACTIVE</button>
+                        {% if p.stock_quantity > 5 %}
+                        <span class="bg-state-success/15 text-state-success px-2 py-0.5 rounded font-bold">{{ p.stock_quantity }} Units</span>
+                        {% elif p.stock_quantity > 0 %}
+                        <span class="bg-state-warning/20 text-state-warning px-2 py-0.5 rounded font-bold">{{ p.stock_quantity }} Units (Low)</span>
+                        {% else %}
+                        <span class="bg-state-error/15 text-state-error px-2 py-0.5 rounded font-bold">Out of Stock</span>
+                        {% endif %}
                     </td>
-                    <td class="p-4 text-right">
-                        <a href="{% url 'catalog:vendor_product_form' %}" class="text-brand-indigo font-bold hover:underline text-xs">Edit</a>
+                    <td class="p-4">
+                        <span class="px-2 py-0.5 rounded font-bold uppercase {% if p.moderation_status == 'approved' %}bg-state-success/15 text-state-success{% elif p.moderation_status == 'pending' %}bg-state-warning/20 text-state-warning{% else %}bg-neutral-200 text-neutral-700{% endif %}">
+                            {{ p.get_moderation_status_display }}
+                        </span>
+                    </td>
+                    <td class="p-4 text-right space-x-2">
+                        <a href="{% url 'catalog:product_detail' slug=p.slug %}" target="_blank" class="text-neutral-600 font-bold hover:underline">View</a>
+                        <a href="{% url 'catalog:vendor_product_edit' product_id=p.id %}" class="text-brand-indigo font-bold hover:underline">Edit</a>
                     </td>
                 </tr>
+                {% empty %}
                 <tr>
-                    <td class="p-4 font-display font-bold text-surface-ink">Palpali Dhaka Shawl</td>
-                    <td class="p-4 tabular-nums font-semibold">NPR 1,450</td>
-                    <td class="p-4"><span class="bg-state-error/15 text-state-error px-2 py-0.5 rounded text-xs font-bold">2 Units (Low)</span></td>
-                    <td class="p-4">
-                        <button hx-post="#" class="bg-state-success text-white px-3 py-1 rounded-stall text-xs font-bold shadow">🟢 ACTIVE</button>
-                    </td>
-                    <td class="p-4 text-right">
-                        <a href="{% url 'catalog:vendor_product_form' %}" class="text-brand-indigo font-bold hover:underline text-xs">Edit</a>
+                    <td colspan="6" class="p-8 text-center text-neutral-500">
+                        No products listed yet. Click "+ Add New Product" above!
                     </td>
                 </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>

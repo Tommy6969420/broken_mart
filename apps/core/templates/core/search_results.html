@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Search: {{ query|default:request.GET.q }} — Makwanpur Mart{% endblock %}
+{% block title %}Search: {{ query }} — Makwanpur Mart{% endblock %}
 
 {% block content %}
 <div class="space-y-6" x-data="{ showMobileFilters: false }">
@@ -27,7 +27,7 @@
             <!-- Secondary Search Bar with suggestions -->
             <form action="{% url 'core:search_results' %}" method="get" class="flex gap-2 max-w-sm w-full"
                   hx-get="{% url 'catalog:search_suggestions' %}" hx-trigger="keyup changed delay:300ms" hx-target="#suggestions-box">
-                <input type="text" name="q" value="{{ query|default:request.GET.q }}" placeholder="Search products, sellers, categories…"
+                <input type="text" name="q" value="{{ query }}" placeholder="Search products, sellers, categories…"
                        class="bg-surface-base border border-neutral-300 rounded-stall px-3 py-2 text-sm flex-grow focus:border-brand-marigold"
                        autocomplete="off">
                 <button type="submit" class="bg-brand-green text-white px-4 py-2 rounded-stall text-sm font-display font-semibold">Search</button>
@@ -46,7 +46,7 @@
             </div>
             
             <form method="get" action="{% url 'core:search_results' %}" id="advanced-search-form" class="space-y-5">
-                <input type="hidden" name="q" value="{{ query|default:request.GET.q }}">
+                <input type="hidden" name="q" value="{{ query }}">
                 
                 <!-- Category Filter -->
                 <div class="space-y-2">

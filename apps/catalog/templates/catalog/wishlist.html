@@ -28,7 +28,7 @@
                 <div class="text-[10px] text-neutral-500">Payable ~ NPR {{ product.pricing_breakdown.total_payable|floatformat:0 }} incl. VAT</div>
             </div>
             <div class="p-4 pt-0 space-y-2">
-                <form method="post" action="{% url 'orders:add_to_cart_ajax' %}" hx-post="{% url 'orders:add_to_cart_ajax' %}" hx-target="#wishlist-toast-{{ item.id }}" class="space-y-2">
+                <form method="post" action="{% url 'orders:cart_add' %}" hx-post="{% url 'orders:cart_add' %}" hx-target="#wishlist-toast-{{ item.id }}" class="space-y-2">
                     {% csrf_token %}
                     <input type="hidden" name="product_id" value="{{ product.id }}">
                     <input type="hidden" name="quantity" value="1">
@@ -39,7 +39,7 @@
                 </form>
                 <div class="flex gap-2">
                     <a href="{% url 'catalog:product_detail' slug=product.slug %}" class="flex-1 text-center border border-neutral-300 py-1.5 rounded-stall text-xs font-semibold hover:bg-surface-base">View</a>
-                    <button hx-post="{% url 'catalog:toggle_wishlist_ajax' %}" hx-vals='{"product_id":"{{ product.id }}"}' hx-target="closest .bg-white" hx-swap="outerHTML swap:0.3s"
+                    <button hx-post="{% url 'catalog:wishlist_toggle' %}" hx-vals='{"product_id":"{{ product.id }}"}' hx-target="closest .bg-white" hx-swap="outerHTML swap:0.3s"
                             class="px-3 border border-state-error/30 text-state-error rounded-stall text-xs hover:bg-state-error/5">Remove</button>
                 </div>
             </div>

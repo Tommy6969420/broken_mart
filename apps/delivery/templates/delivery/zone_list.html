@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Manage Delivery Zones — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6 my-6">
+    <div class="bg-white p-6 rounded-stall border border-neutral-200 shadow-sm flex justify-between items-center">
+        <div>
+            <h1 class="font-display font-bold text-2xl text-brand-green">Makwanpur Hyperlocal Delivery Zones</h1>
+            <p class="text-xs text-neutral-500">Configure base delivery fees and time SLAs per ward group.</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="{% url 'delivery:admin_delivery_list' %}" class="bg-surface-base border px-4 py-2 rounded-stall text-sm font-bold hover:bg-neutral-100">← Delivery Dashboard</a>
+            <a href="{% url 'delivery:zone_create' %}" class="bg-brand-marigold text-surface-ink font-display font-bold px-4 py-2 rounded-stall text-sm shadow hover:brightness-105">
+                + Create New Zone
+            </a>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-stall border border-neutral-200 overflow-hidden shadow-sm">
+        <table class="w-full text-left text-sm">
+            <thead class="bg-surface-base border-b font-display text-xs uppercase text-neutral-500">
+                <tr>
+                    <th class="p-4">Zone Name</th>
+                    <th class="p-4">Wards Covered</th>
+                    <th class="p-4">Base Fee (NPR)</th>
+                    <th class="p-4">Est. SLA</th>
+                    <th class="p-4">Status</th>
+                    <th class="p-4 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y text-xs">
+                {% for z in zones %}
+                <tr class="hover:bg-neutral-50">
+                    <td class="p-4 font-display font-bold text-surface-ink">{{ z.name }}</td>
+                    <td class="p-4 font-mono">{{ z.ward_numbers }}</td>
+                    <td class="p-4 font-bold text-brand-green tabular-nums">NPR {{ z.base_delivery_fee }}</td>
+                    <td class="p-4">{{ z.estimated_delivery_time_minutes }} mins</td>
+                    <td class="p-4">
+                        {% if z.is_active %}
+                        <span class="bg-state-success/15 text-state-success px-2 py-0.5 rounded font-bold uppercase">Active</span>
+                        {% else %}
+                        <span class="bg-neutral-200 text-neutral-600 px-2 py-0.5 rounded font-bold uppercase">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="p-4 text-right">
+                        <a href="{% url 'delivery:zone_edit' zone_id=z.id %}" class="text-brand-indigo font-bold hover:underline">Edit Zone</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="p-8 text-center text-neutral-500">No delivery zones defined yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

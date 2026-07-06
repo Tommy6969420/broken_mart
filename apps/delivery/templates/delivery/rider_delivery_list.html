@@ -1,14 +1,155 @@
 {% extends "base.html" %}
-{% block title %}Rider Delivery Feed [Phase 2] — Makwanpur Mart{% endblock %}
+{% block title %}Rider Delivery Feed — Makwanpur Mart{% endblock %}
 {% block content %}
 <div class="space-y-6">
-    <h1 class="font-display font-bold text-3xl text-brand-green">Active Dispatched Drops</h1>
-    <div class="bg-white p-6 rounded-stall border-2 border-brand-marigold shadow-sm flex justify-between items-center">
+    <div class="bg-brand-green text-white p-6 rounded-stall shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-            <span class="font-bold text-xs bg-brand-marigold px-2 py-0.5 rounded">Drop #MM-8492</span>
-            <h3 class="font-display font-bold text-lg mt-1">Pickup: Shrestha Cloth Store → Drop: Ward #4</h3>
+            <h1 class="font-display font-bold text-3xl flex items-center gap-3">
+                Dispatch Feed
+                {% if rider.is_kyc_verified %}
+                <span class="bg-state-success text-white text-xs px-2.5 py-0.5 rounded-full font-bold">✓ KYC Verified</span>
+                {% else %}
+                <span class="bg-state-warning text-white text-xs px-2.5 py-0.5 rounded-full font-bold">⏳ {{ kyc_status }}</span>
+                {% endif %}
+            </h1>
+            <p class="text-xs text-neutral-300 mt-1">
+                Vehicle: <strong>{{ rider.get_vehicle_type_display }}</strong> • Current Zone: <strong>{{ current_zone|default:"All Hetauda Wards" }}</strong> • Total Completed: <strong>{{ rider.total_deliveries }}</strong>
+            </p>
         </div>
-        <a href="{% url 'delivery:delivery_detail' delivery_id=1 %}" class="bg-brand-green text-white font-bold px-5 py-2 rounded-stall text-sm shadow">Process Drop</a>
+        <div class="flex items-center gap-3">
+            <a href="{% url 'accounts:rider_dashboard' %}" class="bg-surface-base text-brand-green font-display font-bold px-4 py-2 rounded-stall text-sm shadow hover:bg-neutral-100">Rider Dashboard</a>
+        </div>
     </div>
+
+    {% if kyc_blocked %}
+    <div class="bg-state-warning/15 border-2 border-brand-marigold rounded-stall p-6 space-y-3">
+        <h3 class="font-display font-bold text-xl text-state-warning flex items-center gap-2">
+            🔒 KYC Verification Required to Accept Tasks
+        </h3>
+        <p class="text-sm text-neutral-800">
+            Per Nepal E-Commerce Act 2081, delivery partners must complete KYC identity verification (Citizenship, Driver's License, Vehicle Bluebook, and Liveness Selfie) before accepting delivery tasks on Makwanpur Mart.
+        </p>
+        <div class="pt-2">
+            <a href="{% url 'accounts:rider_profile_edit' %}" class="inline-block bg-brand-indigo text-white font-display font-bold px-6 py-2.5 rounded-stall text-sm shadow hover:brightness-110">
+                Upload & Submit KYC Documents →
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Active Deliveries -->
+    <div class="space-y-4">
+        <h2 class="font-display font-bold text-2xl text-brand-green">My Active Deliveries (In Progress)</h2>
+        {% if active_deliveries %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for delivery in active_deliveries %}
+                <div class="bg-white p-5 rounded-stall border-2 border-brand-green shadow-sm space-y-4">
+                    <div class="flex justify-between items-center border-b pb-2">
+                        <span class="bg-brand-green text-white font-bold text-xs px-2.5 py-1 rounded">Order #{{ delivery.order.order_number }}</span>
+                        <span class="font-bold text-sm uppercase text-brand-marigold">{{ delivery.get_status_display }}</span>
+                    </div>
+                    <div class="text-sm space-y-1">
+                        <div><strong>Customer:</strong> {{ delivery.order.customer.get_full_name|default:delivery.order.customer.email }}</div>
+                        <div><strong>Drop Address:</strong> {{ delivery.order.delivery_address.municipality }} Ward #{{ delivery.order.delivery_address.ward_number }}</div>
+                        <div><strong>Landmark:</strong> {{ delivery.order.delivery_address.landmark|default:"None specified" }}</div>
+                        <div><strong>Payment:</strong> {{ delivery.order.get_payment_method_display }} ({{ delivery.order.get_payment_status_display }}) • Total: <strong>NPR {{ delivery.order.total_amount }}</strong></div>
+                        <div><strong>Rider Payout:</strong> NPR {{ delivery.delivery_fee_owed_to_rider }}</div>
+                    </div>
+                    <div class="flex flex-wrap gap-2 pt-2 border-t">
+                        <a href="{% url 'delivery:delivery_detail' delivery_id=delivery.id %}" class="bg-brand-indigo text-white font-bold px-4 py-2 rounded text-xs">📍 View GPS Map & Details</a>
+                        
+                        <form action="{% url 'delivery:rider_update_status' delivery_id=delivery.id %}" method="post" class="inline">
+                            {% csrf_token %}
+                            {% if delivery.status == 'assigned' %}
+                                <input type="hidden" name="status" value="picked_up">
+                                <button type="submit" class="bg-state-warning text-white font-bold px-4 py-2 rounded text-xs shadow hover:brightness-110">📦 Mark Picked Up</button>
+                            {% elif delivery.status == 'picked_up' %}
+                                <input type="hidden" name="status" value="delivered">
+                                <button type="submit" class="bg-state-success text-white font-bold px-4 py-2 rounded text-xs shadow hover:brightness-110">✓ Confirm Delivery & Collect Cash</button>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+            </div>
+        {% else %}
+            <div class="bg-white p-6 rounded-stall border border-neutral-200 text-center text-sm text-neutral-500">
+                No active deliveries in progress. Pick up a new drop task below!
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Available Unassigned Pool -->
+    <div class="space-y-4">
+        <h2 class="font-display font-bold text-2xl text-brand-green">Available Dispatch Drops (Unassigned Pool)</h2>
+        {% if kyc_blocked %}
+            <div class="bg-surface-base p-6 rounded-stall border text-center text-sm text-neutral-600">
+                You must complete KYC verification before accepting tasks from the available dispatch pool.
+            </div>
+        {% elif available_deliveries %}
+            <div class="grid grid-cols-1 gap-4">
+            {% for delivery in available_deliveries %}
+                <div class="bg-white p-5 rounded-stall border border-neutral-300 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div class="space-y-1 text-sm">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-xs bg-brand-marigold text-surface-ink px-2 py-0.5 rounded">Order #{{ delivery.order.order_number }}</span>
+                            <span class="text-xs text-neutral-500">Placed {{ delivery.order.placed_at|timesince }} ago</span>
+                        </div>
+                        <h3 class="font-display font-bold text-base mt-1">
+                            Drop: {{ delivery.order.delivery_address.municipality }} Ward #{{ delivery.order.delivery_address.ward_number }}
+                            {% if delivery.order.delivery_address.landmark %} — Landmark: {{ delivery.order.delivery_address.landmark }}{% endif %}
+                        </h3>
+                        <p class="text-xs text-neutral-600">
+                            Customer: {{ delivery.order.customer.get_full_name|default:delivery.order.customer.username }} • Order Total: NPR {{ delivery.order.total_amount }}
+                            {% if delivery.order.delivery_address.latitude %} • <span class="text-brand-green font-bold">📍 Exact GPS Pin Available</span>{% endif %}
+                        </p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                        <a href="{% url 'delivery:delivery_detail' delivery_id=delivery.id %}" class="px-4 py-2 bg-surface-base border rounded text-xs font-bold text-center">Inspect Details</a>
+                        <form action="{% url 'delivery:rider_accept' delivery_id=delivery.id %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="w-full sm:w-auto bg-brand-green text-white font-bold px-5 py-2 rounded-stall text-sm shadow hover:brightness-110">Accept Drop Task</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+            </div>
+        {% else %}
+            <div class="bg-white p-6 rounded-stall border border-neutral-200 text-center text-sm text-neutral-500">
+                No unassigned deliveries in your zone currently. Check back soon!
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- History -->
+    {% if history %}
+    <div class="space-y-3 pt-4 border-t">
+        <h3 class="font-display font-bold text-lg text-neutral-800">Recent Delivery History</h3>
+        <div class="bg-white rounded-stall border overflow-hidden">
+            <table class="w-full text-left text-xs">
+                <thead class="bg-surface-base border-b">
+                    <tr>
+                        <th class="p-3 font-bold">Order #</th>
+                        <th class="p-3 font-bold">Destination</th>
+                        <th class="p-3 font-bold">Status</th>
+                        <th class="p-3 font-bold">Payout Fee</th>
+                        <th class="p-3 font-bold">Time</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y">
+                    {% for h in history %}
+                    <tr class="hover:bg-neutral-50">
+                        <td class="p-3 font-bold">#{{ h.order.order_number }}</td>
+                        <td class="p-3">{{ h.order.delivery_address.municipality }} Ward #{{ h.order.delivery_address.ward_number }}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold {% if h.status == 'delivered' %}bg-state-success/15 text-state-success{% else %}bg-neutral-200 text-neutral-700{% endif %}">{{ h.get_status_display }}</span></td>
+                        <td class="p-3">NPR {{ h.delivery_fee_owed_to_rider }}</td>
+                        <td class="p-3 text-neutral-500">{{ h.assigned_at|date:"M d, H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

@@ -93,9 +93,11 @@ class DeliveryAssignmentForm(forms.ModelForm):
         from apps.accounts.models import RiderProfile
         
         super().__init__(*args, **kwargs)
-        # Get available riders
+        # Get available and KYC-verified riders
         self.fields['rider'].queryset = RiderProfile.objects.filter(
-            is_available=True
+            is_available=True,
+            kyc_status='verified',
+            is_banned=False
         ).select_related('user', 'current_zone')
 
 

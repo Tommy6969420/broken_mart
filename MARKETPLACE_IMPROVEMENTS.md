@@ -224,37 +224,93 @@ Displayed on product_detail in a bordered “Transparent Hetauda Pricing” box 
 
 ---
 
+### G. Rider KYC Verification Gate (Driver Task Enforcement)
+
+**Model & Migration (`accounts/models.py`, `migrations/0003_...`):**
+- `RiderProfile.kyc_status`: `not_submitted`, `pending`, `in_review`, `verified`, `rejected`, `suspended`
+- `can_accept_deliveries` property checks `is_kyc_verified`, `user.is_active`, `user.is_phone_verified`, and `not is_banned`
+- `clean()` and `save()` auto-disable `is_available` if KYC verification lapses or is not completed
+
+**Service Gates (`delivery/services.py`):**
+- `accept_delivery()` enforces `if not rider.can_accept_deliveries: return False, "KYC verification required..."`
+- `assign_delivery()` blocks assigning unverified riders
+- Auto-creation of unassigned `Delivery` record in dispatch pool inside `place_order()` (`orders/services.py`)
+
+**Driver UI Workflows (`delivery/views.py`, `rider_delivery_list.html`, `delivery_detail.html`):**
+- `RiderDeliveryListView`: blocks unverified riders from seeing available dispatch tasks (`available_deliveries = []`) and displays a prominent warning banner with upload link
+- `toggle_availability`: AJAX endpoint returns explicit error preventing unverified riders from toggling online status
+- `DeliveryDetailView`: authorized for verified riders inspecting unassigned tasks in their zone before accepting
+
+---
+
+### H. Makwanpur District Map & Exact Location Pinpointing
+
+**Interactive Bounded Map (`templates/includes/makwanpur_map.html`):**
+- Centered on Hetauda (`27.4287, 85.0320`) with strict Leaflet bounding box (`[[27.15, 84.65], [27.65, 85.35]]`)
+- Interactive drag/click pin automatically updates `latitude` and `longitude` form fields
+- Alerts user and prevents pin movement if dragged or clicked outside Makwanpur District boundaries
+- Supports `readonly="true"` mode for riders and customer tracking
+
+**Server-Side Validation & Cross-Database Compatibility:**
+- `AddressForm.clean()` strictly validates submitted coordinates fall within Makwanpur bounds (`27.15 <= lat <= 27.65`, `84.65 <= lon <= 85.35`)
+- Replaced database-specific JSON `__contains` queries with cross-database Python filtering over active `DeliveryZone` objects in `accounts/services.py`, `delivery/services.py`, and `orders/services.py` (fixing SQLite `NotSupportedError`)
+
+---
+
+### I. Support Desk Agent Console & Unified Ticketing Portal
+
+**Support Agent Console (`support/views.py:AgentSupportConsoleView`, `agent_console.html`):**
+- Split-screen live desk for support staff (`is_staff` or `role == 'admin'`)
+- Left column: filterable ticket queue (`Open`, `Waiting Customer`, `In Progress`, `Resolved`) with status counters and channel indicators
+- Center column: live conversation thread (`TicketMessage`) with quick reply box, internal note toggles (`is_internal_note`), and self-assignment controls
+- Header and FAB navigation shortcuts (`🎧 Support Console`)
+
+**Customer Support & Grievance Portal (`complaint_list.html`, `ticket_detail.html`, `admin_complaint_queue.html`):**
+- Unified customer dashboard listing active chat tickets (`SupportTicket`) and legal grievances (`GrievanceComplaint`)
+- Dedicated ticket detail thread view (`SupportTicketDetailView`) allowing customers to reply outside live chat widgets
+- Functional Admin Grievance Queue (`admin_complaint_queue.html`) with inline resolution notes for E-Commerce Act 2081 compliance
+
+---
+
 ## 3. Files Changed — Summary
 
 **Models (core business logic):**
-- `apps/accounts/models.py` — `VendorProfile` + location, trust, return policy fields; + `SellerReview` model (112 lines)
+- `apps/accounts/models.py` — `VendorProfile` + location, trust, return policy fields; `RiderProfile` KYC gates; `SellerReview` model
+- `apps/accounts/migrations/0003_riderprofile_average_delivery_rating_and_more.py` — migration for rider KYC fields
 - `apps/catalog/models.py` — `Product` + moderation workflow, auto-flagging, transparent pricing property
-- `apps/support/models.py` — + `SupportTicket`, `TicketMessage`, `LiveChatSession`
+- `apps/support/models.py` — `SupportTicket`, `TicketMessage`, `LiveChatSession`
 
 **Services:**
 - `apps/catalog/services.py` — `search_products()` advanced rewrite + `get_zero_result_suggestions()`
-- `apps/orders/services.py` — + `calculate_transparent_pricing()`, `get_cart_pricing_breakdown()`, `get_product_pricing_preview()`
-- `apps/accounts/services.py` — (unchanged, but `refresh_vendor_stats` now also used by `SellerReview`)
+- `apps/orders/services.py` — `calculate_transparent_pricing()`, `get_cart_pricing_breakdown()`, automatic `Delivery` generation in `place_order()`, zone check fix
+- `apps/accounts/services.py` — cross-database `validate_delivery_zone()` implementation
+- `apps/delivery/services.py` — KYC gates in `accept_delivery()` and `assign_delivery()`, cross-database zone lookups
 
 **Views:**
 - `apps/catalog/views.py` — `ProductDetailView`: moderation filter, prefetch seller_reviews, pricing_preview, caching
 - `apps/orders/views.py` — `CartView`: transparent pricing breakdown injection
-- `apps/core/views.py` — `SearchResultsView`: advanced filter parsing, trusted_only, HTMX partial
-- `apps/support/views.py` — + `chat_messages_ajax`, `chat_send_ajax`, `get_or_create_chat_session`
+- `apps/core/views.py` — `SearchResultsView`: advanced filter parsing, trusted_only, query param lookup fix
+- `apps/delivery/views.py` — `RiderDeliveryListView`, `DeliveryDetailView`, `toggle_availability` with KYC enforcement
+- `apps/support/views.py` — `chat_messages_ajax`, `chat_send_ajax`, `AgentSupportConsoleView`, `agent_ticket_reply`, `SupportTicketDetailView`, `ticket_customer_reply`
 
 **URLs:**
-- `apps/support/urls.py` — + `chat/messages/`, `chat/send/`
+- `apps/support/urls.py` — chat endpoints, customer ticket detail routes, agent console routes
 
 **Templates (UI / UX):**
-- `templates/base.html` — includes `support_fab.html`, moved HTMX indicator to bottom-20 to avoid overlap
-- `templates/includes/stall_badge.html` — **dynamic verified seller badge** (DB-driven), seller ratings inline
-- `templates/includes/support_fab.html` — **NEW** persistent support FAB + live chat/ticket/help 3-tab widget
-- `apps/catalog/templates/catalog/product_detail.html` — **full rewrite dynamic**: vendor badge include, seller rating stars, transparent pricing breakdown box, vendor return policy block pulling `product.vendor.return_policy_text`, seller performance snapshot, moderation transparency footer, lazy images
-- `apps/orders/templates/orders/cart.html` — dynamic vendor-grouped cart, transparent pricing right rail (VAT 13%, platform 2%, shipping), coupon HTMX, return policy mini per vendor
-- `apps/core/templates/core/search_results.html` — advanced filters UI (rating, municipality, ward, verified/trusted), relevance sort default, zero-result suggestions panel with trending products, did-you-mean, popular searches, category browse
+- `templates/base.html` — includes `support_fab.html`, moved HTMX indicator to bottom-20
+- `templates/includes/header.html` — role switcher shortcut updated with `🎧 Support Console`
+- `templates/includes/stall_badge.html` — dynamic verified seller badge (DB-driven)
+- `templates/includes/support_fab.html` — persistent support widget + agent shortcuts
+- `templates/includes/makwanpur_map.html` — interactive Leaflet map restricted to Makwanpur District
+- `apps/catalog/templates/catalog/product_detail.html` — full rewrite dynamic
+- `apps/orders/templates/orders/cart.html` & `checkout.html` — dynamic vendor cart, GPS pin address display, transparent pricing breakdown
+- `apps/core/templates/core/search_results.html` — advanced filters UI + zero-result suggestions
+- `apps/delivery/templates/delivery/rider_delivery_list.html` & `delivery_detail.html` — dynamic dispatch workflow
+- `apps/support/templates/support/agent_console.html`, `ticket_detail.html`, `complaint_list.html`, `complaint_detail.html`, `admin_complaint_queue.html` — full support & grievance portal
 
 **Admin:**
-- (Recommended) register `SellerReview`, `SupportTicket`, `TicketMessage` in respective `admin.py` — models ready, admin registration is 1-liner per model (left for implementer to avoid merge conflicts)
+- Registered `SellerReview`, `SupportTicket`, `TicketMessage`, `LiveChatSession` in admin
+- Enhanced `RiderProfileAdmin` with bulk actions (`verify_kyc`, `reject_kyc`)
 
 ---
 
@@ -262,65 +318,51 @@ Displayed on product_detail in a bordered “Transparent Hetauda Pricing” box 
 
 | Requirement | Implementation | File:Line |
 |---|---|---|
-| **Seller ratings/reviews** | `SellerReview` model, multi-dimension ratings, auto vendor stats update | `accounts/models.py:236-310` |
-| **Dynamic verified seller badge** | `vendor.verified_badge_data` property + `stall_badge.html` conditional on `vendor.is_verified` | `accounts/models.py:146-161`, `templates/includes/stall_badge.html:1-55` |
-| **Return/refund policy every product page** | `VendorProfile.return_policy_text`, `return_window_days`, rendered in product_detail return block | `accounts/models.py:96-108`, `catalog/templates/catalog/product_detail.html:95-110` |
-| **Advanced search filters** | `search_products(min_rating, municipality, ward_number, verified_only)` | `catalog/services.py:145-270` |
-| **Relevance-based sorting** | Annotated `relevance_score` + vendor_boost, default sort | `catalog/services.py:190-210` |
-| **Zero-result suggestions** | `get_zero_result_suggestions()` + UI panel | `catalog/services.py:273-312`, `core/templates/core/search_results.html:140-210` |
+| **Seller ratings/reviews** | `SellerReview` model, multi-dimension ratings, auto vendor stats update | `accounts/models.py` |
+| **Dynamic verified seller badge** | `vendor.verified_badge_data` property + `stall_badge.html` conditional on `vendor.is_verified` | `accounts/models.py`, `templates/includes/stall_badge.html` |
+| **Return/refund policy every product page** | `VendorProfile.return_policy_text`, `return_window_days`, rendered in product_detail return block | `accounts/models.py`, `catalog/templates/catalog/product_detail.html` |
+| **Advanced search filters** | `search_products(min_rating, municipality, ward_number, verified_only)` | `catalog/services.py` |
+| **Relevance-based sorting** | Annotated `relevance_score` + vendor_boost, default sort | `catalog/services.py` |
+| **Zero-result suggestions** | `get_zero_result_suggestions()` + UI panel | `catalog/services.py`, `core/templates/core/search_results.html` |
 | **Lazy-loaded images** | `loading="lazy"` all `<img>` | product_detail, cart, search_results |
-| **Caching** | `cache.set/get` product_detail 120s, search 60s | `catalog/views.py:35-70`, `catalog/services.py:240` |
+| **Caching** | `cache.set/get` product_detail 120s, search 60s | `catalog/views.py`, `catalog/services.py` |
 | **Efficient DB queries** | `select_related` + `prefetch_related` everywhere | multiple views |
-| **Checkout 2–3 steps** | 1-page 2-step (address → payment), notes optional | `orders/templates/orders/checkout.html` (existing, messaging updated in cart) |
-| **Transparent pricing product/cart** | `Product.pricing_breakdown`, `calculate_transparent_pricing()` | `catalog/models.py:108-135`, `orders/services.py:465-520` |
-| **Persistent support entry point** | `support_fab.html` included in `base.html` | `templates/base.html:63`, `templates/includes/support_fab.html` |
-| **Ticketing / live chat** | `SupportTicket` + `TicketMessage` + `LiveChatSession`, HTMX chat views | `support/models.py:89-210`, `support/views.py:253-350` |
-| **Listing moderation workflow** | `Product.moderation_status`, `auto_flag_score`, `run_automated_moderation()` | `catalog/models.py:28-60`, `138-198` |
-| **Automated flagging** | keyword, price anomaly, description length, caps, unverified vendor scoring | `catalog/models.py:138-180` |
-| **Manual approval** | `reviewed_at`, `reviewed_by`, status `APPROVED`/`REJECTED`/`SUSPENDED` required for public visibility | `catalog/models.py:45-55` |
+| **Checkout 2–3 steps** | 1-page 2-step (address → payment), notes optional | `orders/templates/orders/checkout.html` |
+| **Transparent pricing product/cart** | `Product.pricing_breakdown`, `calculate_transparent_pricing()` | `catalog/models.py`, `orders/services.py` |
+| **Persistent support entry point** | `support_fab.html` included in `base.html` | `templates/base.html`, `templates/includes/support_fab.html` |
+| **Ticketing / live chat** | `SupportTicket` + `TicketMessage` + `LiveChatSession`, HTMX chat views | `support/models.py`, `support/views.py` |
+| **Listing moderation workflow** | `Product.moderation_status`, `auto_flag_score`, `run_automated_moderation()` | `catalog/models.py` |
+| **Automated flagging** | keyword, price anomaly, description length, caps, unverified vendor scoring | `catalog/models.py` |
+| **Manual approval** | `reviewed_at`, `reviewed_by`, status `APPROVED`/`REJECTED`/`SUSPENDED` required for public visibility | `catalog/models.py` |
+| **Rider KYC verification gate** | `can_accept_deliveries` gate in services, views, forms, and admin actions | `delivery/services.py`, `accounts/models.py` |
+| **Makwanpur exact GPS maps** | Bounded Leaflet map (`27.15-27.65, 84.65-85.35`) + coordinate validation | `templates/includes/makwanpur_map.html`, `accounts/forms.py` |
+| **Support agent console** | Split-screen ticket/chat console (`AgentSupportConsoleView`) + customer reply portal | `support/views.py`, `agent_console.html` |
 
 ---
 
 ## 5. Testing / QA Notes
 
-- **Migrations needed:** 
+- **Migrations generated and applied:** 
   ```
-  python manage.py makemigrations accounts catalog support orders
   python manage.py migrate
   ```
-  New fields have defaults / null=True where safe — existing data migrates cleanly.
+  Migration `0003_riderprofile_average_delivery_rating_and_more.py` creates rider KYC columns cleanly.
 
-- **Moderation backfill:** existing products will get `moderation_status='pending'` then auto-run on next save. Recommended management command:
-  ```python
-  Product.objects.filter(moderation_status='pending').update(moderation_status='approved') 
-  # OR run .run_automated_moderation() loop for trusted vendors
-  ```
+- **Automated Test Suite Status:**
+  - 11 automated unit tests across `apps.core`, `apps.delivery`, and `apps.support` passing 100%.
+  - Verified KYC service blocking, verified rider acceptance, Makwanpur coordinate validation bounds, order placement delivery generation, and support console permissions/replies.
 
-- **Search regression:** old `search_products(query, category, min_price, max_price, condition, sort_by, page, per_page)` signature extended with kwargs defaults — **backward compatible**.
-
-- **Template context changes:**
-  - `product_detail`: adds `pricing_preview`, `seller_reviews`, `vendor_badge`, `trust_score`
-  - `cart`: adds `pricing`
-  - `search_results`: adds `suggestions`, `has_results`, `applied_filters`
-  - All new context keys are optional in templates (graceful fallback)
-
-- **Performance check:**
-  - Product detail: 4 queries (product+vendor+images+variants+reviews) via prefetch
-  - Search: 2 queries + count, cached
-  - Cart: 1 query with joins
+- **Cross-Database Compatibility:**
+  - All JSON `__contains` queries replaced with iterable active zone filters, ensuring identical behavior across SQLite development databases and PostgreSQL production databases.
 
 ---
 
 ## 6. Next Steps (Optional P2)
 
-- Admin action views: approve/reject product moderation queue UI (`/admin/catalog/product/moderation/`)
-- SellerReview submission form + vendor_response UI
-- SupportTicket agent dashboard + SLA timers + satisfaction CSAT
 - Elastic / Postgres full-text search (`SearchVector`) replacing `icontains` for relevance
 - Image CDN + WebP conversion + `srcset` responsive
-- Checkout 2-step wizard split (address step → payment step separate URLs) with progress bar
-- Real eSewa/Khalti webhook handling + VAT invoice PDF
-- Celery: `refresh_vendor_stats`, `send_sms_task`, moderation auto-flag async
+- Real eSewa/Khalti webhook verification + automated VAT invoice PDF generation
+- Celery worker integration: `refresh_vendor_stats`, `send_sms_task`, moderation auto-flag async
 
 ---
 

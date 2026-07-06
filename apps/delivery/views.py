@@ -17,7 +17,7 @@ from django.views.generic import DetailView, ListView, TemplateView, View
 from .forms import DeliveryAssignmentForm, DeliveryStatusUpdateForm, DeliveryZoneForm
 from .models import Delivery, DeliveryZone
 from .services import (
-    accept_delivery, complete_delivery, get_delivery_stats, get_rider_active_deliveries,
+    accept_delivery, complete_delivery, get_available_deliveries, get_delivery_stats, get_rider_active_deliveries,
     get_rider_delivery_history, unassign_delivery, update_delivery_status
 )
 from apps.accounts.models import RiderProfile, User
@@ -37,9 +37,11 @@ class DeliveryDetailView(LoginRequiredMixin, View):
         
         # Check authorization
         user = request.user
+        rider_profile = getattr(user, 'rider_profile', None)
         is_authorized = (
             delivery.order.customer == user or
-            delivery.rider == getattr(user, 'rider_profile', None) or
+            delivery.rider == rider_profile or
+            (rider_profile and delivery.status == Delivery.Status.UNASSIGNED and rider_profile.can_accept_deliveries) or
             user.is_staff or
             user.role == User.Role.ADMIN
         )
@@ -71,16 +73,30 @@ class RiderDeliveryListView(LoginRequiredMixin, View):
         
         rider = request.user.rider_profile
         
+        if not rider.can_accept_deliveries:
+            messages.warning(
+                request,
+                f'KYC {rider.get_kyc_status_display()} — Complete KYC verification to accept delivery tasks.'
+            )
+            available_deliveries = []
+            kyc_blocked = True
+        else:
+            available_deliveries = get_available_deliveries(rider.current_zone)
+            kyc_blocked = False
+        
         # Get active and available deliveries
         active_deliveries = get_rider_active_deliveries(rider)
         history = get_rider_delivery_history(rider, limit=20)
         
         context = {
             'rider': rider,
+            'available_deliveries': available_deliveries,
             'active_deliveries': active_deliveries,
             'history': history,
             'is_available': rider.is_available,
             'current_zone': rider.current_zone,
+            'kyc_blocked': kyc_blocked,
+            'kyc_status': rider.get_kyc_status_display(),
         }
         
         return render(request, self.template_name, context)
@@ -144,6 +160,13 @@ def toggle_availability(request):
         return JsonResponse({'success': False, 'error': 'Not a rider'})
     
     rider = request.user.rider_profile
+    if not rider.is_available and not rider.can_accept_deliveries:
+        return JsonResponse({
+            'success': False,
+            'error': f'KYC verification required before going online. Current status: {rider.get_kyc_status_display()}',
+            'is_available': False
+        })
+    
     rider.is_available = not rider.is_available
     rider.save(update_fields=['is_available'])
     
@@ -188,6 +211,7 @@ class AdminDeliveryListView(LoginRequiredMixin, TemplateView):
             'status_filter': status_filter,
             'stats': get_delivery_stats(),
             'zones': DeliveryZone.objects.filter(is_active=True),
+            'available_riders': RiderProfile.objects.filter(is_available=True, kyc_status='verified', is_banned=False).select_related('user'),
         }
         
         return render(request, self.template_name, context)

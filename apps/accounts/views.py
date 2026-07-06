@@ -37,13 +37,25 @@ from .services import (
 # =============================================================================
 
 class LoginView(View):
-    """Handle user login with email authentication."""
+    """Handle user login with role-based dashboard routing."""
     
     template_name = 'accounts/login.html'
     
+    def _get_role_redirect(self, user, next_url=None):
+        if next_url and next_url not in ['/', '/core/home/', reverse('core:home'), reverse('accounts:login')]:
+            return next_url
+        if user.is_staff or user.role == User.Role.ADMIN:
+            return reverse('support:agent_console')
+        elif user.role == User.Role.VENDOR:
+            return reverse('accounts:vendor_dashboard')
+        elif user.role == User.Role.RIDER:
+            return reverse('delivery:rider_delivery_list')
+        return reverse('core:home')
+
     def get(self, request):
         if request.user.is_authenticated:
-            return redirect('core:home')
+            next_url = request.GET.get('next')
+            return redirect(self._get_role_redirect(request.user, next_url))
         form = LoginForm()
         return render(request, self.template_name, {'form': form})
     
@@ -60,9 +72,8 @@ class LoginView(View):
                 if user.is_active:
                     login(request, user)
                     
-                    # Get next URL from GET parameters
-                    next_url = request.GET.get('next', reverse('core:home'))
-                    return redirect(next_url)
+                    next_url = request.POST.get('next') or request.GET.get('next')
+                    return redirect(self._get_role_redirect(user, next_url))
                 else:
                     messages.error(request, 'Your account has been deactivated. Please contact support.')
             else:
@@ -245,6 +256,7 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         context['addresses'] = user.addresses.all()[:5]
         context['order_count'] = user.orders.count()
         context['wishlist_count'] = user.wishlist_items.count()
+        context['recent_orders'] = user.orders.select_related('delivery_address').order_by('-placed_at')[:5]
         
         # Add vendor/rider info if applicable
         if user.role == User.Role.VENDOR and hasattr(user, 'vendor_profile'):

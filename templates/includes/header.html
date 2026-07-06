@@ -13,6 +13,9 @@
                     <a href="{% url 'core:home' %}" class="hover:text-brand-marigold font-medium underline">Customer</a>
                     <a href="{% url 'accounts:vendor_dashboard' %}" class="hover:text-brand-marigold font-medium">Vendor</a>
                     <a href="{% url 'accounts:rider_dashboard' %}" class="hover:text-brand-marigold font-medium">Rider</a>
+                    {% if user.is_staff or user.role == 'admin' %}
+                    <a href="{% url 'support:agent_console' %}" class="bg-brand-marigold text-surface-ink px-2 py-0.5 rounded font-bold hover:brightness-110">🎧 Support Console</a>
+                    {% endif %}
                 </div>
                 <!-- Language Toggle (EN/NE) -->
                 <div class="flex items-center gap-1 bg-black/20 rounded-stall px-2 py-0.5 text-xs">
@@ -48,17 +51,31 @@
             </form>
         </div>
 
-        <!-- Action Links: Account, Wishlist, Cart -->
-        <div class="flex items-center gap-4 shrink-0">
-            <a href="{% url 'accounts:profile' %}" class="hidden sm:flex flex-col items-end text-right hover:text-brand-marigold transition">
-                <span class="text-xs text-neutral-300">Namaste,</span>
-                <span class="font-display font-semibold text-sm leading-none">My Account</span>
-            </a>
+        <!-- Action Links: Site-wide Auth, Account & Cart -->
+        <div class="flex items-center gap-3 shrink-0">
+            {% if user.is_authenticated %}
+                <a href="{% url 'accounts:profile' %}" class="hidden sm:flex flex-col items-end text-right hover:text-brand-marigold transition">
+                    <span class="text-[11px] text-neutral-300">Namaste, {{ user.first_name|default:user.username }}</span>
+                    <span class="font-display font-bold text-xs leading-none">{{ user.get_role_display }} Portal</span>
+                </a>
 
-            <a href="{% url 'orders:cart' %}" class="relative bg-brand-marigold text-surface-ink px-3.5 py-2 rounded-stall font-display font-bold text-sm flex items-center gap-2 hover:brightness-105 transition shadow-sm">
-                <span>Cart</span>
-                <span class="bg-surface-ink text-white text-xs px-2 py-0.5 rounded-full tabular-nums">3</span>
-            </a>
+                <a href="{% url 'orders:cart' %}" class="bg-brand-marigold text-surface-ink px-3 py-1.5 rounded-stall font-display font-bold text-xs flex items-center gap-1.5 hover:brightness-105 transition shadow-sm">
+                    <span>🛒 Cart</span>
+                </a>
+
+                <form action="{% url 'accounts:logout' %}" method="post" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="bg-state-error text-white font-bold px-3 py-1.5 rounded-stall text-xs shadow hover:brightness-110 transition">Logout</button>
+                </form>
+            {% else %}
+                <a href="{% url 'accounts:login' %}" class="bg-brand-marigold text-surface-ink px-4 py-2 rounded-stall font-display font-bold text-sm flex items-center gap-1.5 hover:brightness-105 transition shadow-md">
+                    <span>🔑 Login / Sign Up</span>
+                </a>
+
+                <a href="{% url 'orders:cart' %}" class="bg-white/10 text-white border border-white/20 px-3 py-2 rounded-stall font-display font-bold text-xs flex items-center gap-1.5 hover:bg-white/20 transition">
+                    <span>🛒 Cart</span>
+                </a>
+            {% endif %}
 
             <!-- Mobile Menu Toggle -->
             <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden p-2 rounded-stall border border-neutral-600 text-white">

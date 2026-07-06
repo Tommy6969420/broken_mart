@@ -29,4 +29,14 @@ urlpatterns = [
     # --- Marketplace Improvement: Live Chat / Ticketing ---
     path("chat/messages/", views.chat_messages_ajax, name="chat_messages"),
     path("chat/send/", views.chat_send_ajax, name="chat_send"),
+
+    # Customer Support Ticket details & replies
+    path("tickets/<int:ticket_id>/", views.SupportTicketDetailView.as_view(), name="ticket_detail"),
+    path("tickets/<int:ticket_id>/reply/", views.ticket_customer_reply, name="ticket_customer_reply"),
+
+    # Support Team / Agent Chat Console
+    path("agent/console/", views.AgentSupportConsoleView.as_view(), name="agent_console"),
+    path("agent/console/<int:ticket_id>/", views.AgentSupportConsoleView.as_view(), name="agent_console_ticket"),
+    path("agent/ticket/<int:ticket_id>/reply/", views.agent_ticket_reply, name="agent_ticket_reply"),
+    path("agent/ticket/<int:ticket_id>/status/", views.agent_ticket_update_status, name="agent_ticket_status"),
 ]

@@ -328,6 +328,13 @@ class AddressForm(forms.ModelForm):
         cleaned_data = super().clean()
         is_default = cleaned_data.get('is_default')
         
+        lat = cleaned_data.get('latitude')
+        lon = cleaned_data.get('longitude')
+        if lat is not None and lon is not None:
+            from decimal import Decimal
+            if not (Decimal('27.15') <= lat <= Decimal('27.65') and Decimal('84.65') <= lon <= Decimal('85.35')):
+                raise forms.ValidationError("Exact pinpointed coordinates must be inside Makwanpur District, Nepal (Lat: 27.15 - 27.65, Lon: 84.65 - 85.35).")
+        
         # If this is set as default, unset other defaults for this user
         # Fix: use instance.user not self.initial.get('user')
         user = getattr(self.instance, 'user', None)

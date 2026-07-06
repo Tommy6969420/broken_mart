@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Delivery Dispatch Dashboard — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="space-y-6 max-w-7xl mx-auto my-6">
+    <!-- Header -->
+    <div class="bg-brand-green text-white p-6 rounded-stall shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <span class="bg-brand-marigold text-surface-ink text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase">Dispatch Management</span>
+            <h1 class="font-display font-bold text-3xl mt-1 flex items-center gap-3">
+                🚚 Hyperlocal Delivery Dispatch Dashboard
+            </h1>
+            <p class="text-xs text-neutral-300 mt-0.5">Real-time rider assignment &amp; Hetauda Ward SLA tracking</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="{% url 'delivery:zone_list' %}" class="bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold px-4 py-2 rounded-stall text-xs">
+                📍 Manage Delivery Zones
+            </a>
+            <a href="{% url 'support:agent_console' %}" class="bg-brand-indigo text-white font-bold px-4 py-2 rounded-stall text-xs shadow hover:brightness-110">
+                🎧 Agent Console
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Bar -->
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 text-center">
+        <div class="bg-white p-4 rounded-stall border shadow-sm">
+            <div class="text-xs font-bold text-neutral-500 uppercase">Unassigned Pool</div>
+            <div class="font-display font-bold text-2xl text-state-error mt-1">{{ stats.unassigned }}</div>
+        </div>
+        <div class="bg-white p-4 rounded-stall border shadow-sm">
+            <div class="text-xs font-bold text-neutral-500 uppercase">In Progress</div>
+            <div class="font-display font-bold text-2xl text-state-warning mt-1">{{ stats.in_progress }}</div>
+        </div>
+        <div class="bg-white p-4 rounded-stall border shadow-sm">
+            <div class="text-xs font-bold text-neutral-500 uppercase">Delivered</div>
+            <div class="font-display font-bold text-2xl text-state-success mt-1">{{ stats.delivered }}</div>
+        </div>
+        <div class="bg-white p-4 rounded-stall border shadow-sm">
+            <div class="text-xs font-bold text-neutral-500 uppercase">Success Rate</div>
+            <div class="font-display font-bold text-2xl text-brand-green mt-1">{{ stats.success_rate|floatformat:1 }}%</div>
+        </div>
+        <div class="col-span-2 sm:col-span-1 bg-white p-4 rounded-stall border shadow-sm">
+            <div class="text-xs font-bold text-neutral-500 uppercase">Avg Delivery Time</div>
+            <div class="font-display font-bold text-2xl text-brand-indigo mt-1">{{ stats.average_delivery_time_minutes|default:"25"|floatformat:0 }}m</div>
+        </div>
+    </div>
+
+    <!-- Status Filters -->
+    <div class="flex gap-2 border-b pb-3 text-xs font-bold overflow-x-auto">
+        <a href="?status=all" class="px-4 py-2 rounded-stall {% if status_filter == 'all' %}bg-brand-green text-white shadow{% else %}bg-surface-base text-neutral-600 hover:bg-neutral-200{% endif %}">All Jobs ({{ stats.total }})</a>
+        <a href="?status=unassigned" class="px-4 py-2 rounded-stall {% if status_filter == 'unassigned' %}bg-brand-green text-white shadow{% else %}bg-surface-base text-neutral-600 hover:bg-neutral-200{% endif %}">Unassigned ({{ stats.unassigned }})</a>
+        <a href="?status=assigned" class="px-4 py-2 rounded-stall {% if status_filter == 'assigned' %}bg-brand-green text-white shadow{% else %}bg-surface-base text-neutral-600 hover:bg-neutral-200{% endif %}">Assigned</a>
+        <a href="?status=picked_up" class="px-4 py-2 rounded-stall {% if status_filter == 'picked_up' %}bg-brand-green text-white shadow{% else %}bg-surface-base text-neutral-600 hover:bg-neutral-200{% endif %}">Picked Up</a>
+        <a href="?status=delivered" class="px-4 py-2 rounded-stall {% if status_filter == 'delivered' %}bg-brand-green text-white shadow{% else %}bg-surface-base text-neutral-600 hover:bg-neutral-200{% endif %}">Delivered</a>
+    </div>
+
+    <!-- Deliveries Table -->
+    <div class="bg-white rounded-stall border border-neutral-200 overflow-hidden shadow-sm">
+        <table class="w-full text-left text-xs">
+            <thead class="bg-surface-base border-b font-display font-bold text-neutral-600 uppercase">
+                <tr>
+                    <th class="p-4">Drop Job #</th>
+                    <th class="p-4">Order &amp; Customer</th>
+                    <th class="p-4">Destination Ward</th>
+                    <th class="p-4">Status</th>
+                    <th class="p-4">Assigned Rider</th>
+                    <th class="p-4 text-right">Dispatch Action</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y">
+                {% for d in deliveries %}
+                <tr class="hover:bg-neutral-50 transition">
+                    <td class="p-4 font-mono font-bold text-brand-indigo">#DROP-{{ d.id }}</td>
+                    <td class="p-4">
+                        <a href="{% url 'orders:order_detail' order_id=d.order.id %}" class="font-bold underline text-brand-green">Order #{{ d.order.order_number }}</a>
+                        <div class="text-neutral-500">{{ d.order.customer.get_full_name|default:d.order.customer.username }}</div>
+                    </td>
+                    <td class="p-4">
+                        <span class="font-bold">{{ d.order.delivery_address.municipality }} Ward #{{ d.order.delivery_address.ward_number }}</span>
+                        <div class="text-[11px] text-neutral-500">{{ d.order.delivery_address.landmark|truncatechars:35 }}</div>
+                    </td>
+                    <td class="p-4">
+                        <span class="px-2.5 py-0.5 rounded font-bold uppercase {% if d.status == 'delivered' %}bg-state-success/15 text-state-success{% elif d.status == 'unassigned' %}bg-state-error/15 text-state-error{% else %}bg-state-warning/20 text-state-warning{% endif %}">
+                            {{ d.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="p-4">
+                        {% if d.rider %}
+                        <span class="font-bold text-brand-green">🛵 {{ d.rider.user.get_full_name|default:d.rider.user.username }}</span>
+                        <div class="text-[10px] text-neutral-500">{{ d.rider.get_vehicle_type_display }}</div>
+                        {% else %}
+                        <span class="text-state-error font-bold">Unassigned Pool</span>
+                        {% endif %}
+                    </td>
+                    <td class="p-4 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <a href="{% url 'delivery:delivery_detail' delivery_id=d.id %}" class="px-3 py-1.5 bg-surface-base border rounded font-bold hover:bg-neutral-100">Inspect Map</a>
+                            {% if d.status == 'unassigned' %}
+                            <form action="{% url 'delivery:admin_assign_delivery' delivery_id=d.id %}" method="post" class="flex items-center gap-1">
+                                {% csrf_token %}
+                                <select name="rider" required class="border rounded px-2 py-1 bg-white text-xs font-semibold">
+                                    <option value="">Assign Rider...</option>
+                                    {% for r in available_riders %}
+                                    <option value="{{ r.id }}">{{ r.user.get_full_name|default:r.user.username }} ({{ r.get_vehicle_type_display }})</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="bg-brand-green text-white px-3 py-1 rounded font-bold hover:brightness-110">Assign</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="p-12 text-center text-sm text-neutral-500">
+                        No delivery jobs found in this queue view.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

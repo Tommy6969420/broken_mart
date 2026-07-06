@@ -4,10 +4,11 @@ Makwanpur Mart — Production Seed Script
 Run: python manage.py shell < seed.py
   or: python manage.py shell
       >>> exec(open('seed.py').read())
-Creates: categories, vendors (verified), products (approved), users, addresses, reviews, coupons
+Creates: categories, vendors (verified), products (approved), users (customer, agent, riders),
+addresses, delivery zones, sample orders & dispatch drops, support tickets, complaints, seller reviews, coupons.
 All data is Hetauda / Makwanpur authentic, no dummy lorem ipsum.
 """
-import os, django, random
+import os, sys, django, random
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
@@ -16,9 +17,11 @@ from django.utils import timezone
 from decimal import Decimal
 from datetime import timedelta
 
-from apps.accounts.models import User, VendorProfile, Address, SellerReview
+from apps.accounts.models import User, VendorProfile, Address, RiderProfile, SellerReview
 from apps.catalog.models import Category, Product, ProductImage, ProductVariant, Review
-from apps.orders.models import Coupon, Order, OrderItem
+from apps.orders.models import Coupon, Order, OrderItem, Transaction
+from apps.delivery.models import DeliveryZone, Delivery
+from apps.support.models import SupportTicket, TicketMessage, GrievanceComplaint
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -26,18 +29,32 @@ User = get_user_model()
 print("🌱 Makwanpur Mart — Seeding Hetauda Bazaar (Makwanpur District, Nepal)")
 print("="*70)
 
-# Clean slate (dev only)
-if input("Wipe existing catalog data? (yes/NO): ").lower() == 'yes':
-    print("Wiping...")
+# Safe wipe check
+wipe = os.environ.get('WIPE_DATA', 'no').lower() == 'yes'
+try:
+    if not wipe and sys.stdin.isatty():
+        wipe = input("Wipe existing catalog & demo data? (yes/NO): ").lower() == 'yes'
+except Exception:
+    pass
+
+if wipe:
+    print("Wiping existing records...")
+    TicketMessage.objects.all().delete()
+    SupportTicket.objects.all().delete()
+    GrievanceComplaint.objects.all().delete()
+    Delivery.objects.all().delete()
+    OrderItem.objects.all().delete()
+    Order.objects.all().delete()
     Review.objects.all().delete()
     ProductImage.objects.all().delete()
     ProductVariant.objects.all().delete()
     Product.objects.all().delete()
     SellerReview.objects.all().delete()
+    RiderProfile.objects.all().delete()
     VendorProfile.objects.all().delete()
+    DeliveryZone.objects.all().delete()
     Category.objects.all().delete()
-    # keep Users? optionally wipe vendors
-    User.objects.filter(role__in=['vendor','rider']).delete()
+    User.objects.filter(role__in=['vendor', 'rider', 'admin']).delete()
     print("Wiped.")
 
 # 1. Categories — Hetauda authentic hierarchy
@@ -83,10 +100,111 @@ for name, slug, icon_emoji, parent, children in categories_data:
         cat_map[cslug] = child
         if c_created: print(f"    ↳ {cname}")
 
-# 2. Vendors — verified Hetauda shops
+# 2. Delivery Zones — Makwanpur District Hyperlocal
+zones_data = [
+    ("Hetauda Central Bazaar (Wards 1-5)", [1, 2, 3, 4, 5], Decimal("60.00"), 25),
+    ("Hetauda Industrial & Suburban (Wards 6-11)", [6, 7, 8, 9, 10, 11], Decimal("80.00"), 35),
+    ("Makwanpur Outer Wards (Wards 12-19)", [12, 13, 14, 15, 16, 17, 18, 19], Decimal("140.00"), 60),
+]
+zones_map = {}
+for zname, wards, fee, mins in zones_data:
+    dz, z_created = DeliveryZone.objects.get_or_create(
+        name=zname,
+        defaults=dict(ward_numbers=wards, base_delivery_fee=fee, estimated_delivery_time_minutes=mins, is_active=True)
+    )
+    zones_map[zname] = dz
+    if z_created: print(f"  + Delivery Zone: {zname} (NPR {fee})")
+
+# 3. Support Agent & Superuser Admin
+agent_user, a_created = User.objects.get_or_create(
+    email="agent@makwanpur.test",
+    defaults=dict(
+        username="support_agent",
+        phone_number="+9779841000999",
+        role=User.Role.ADMIN,
+        is_staff=True,
+        is_superuser=False,
+        is_active=True,
+        is_phone_verified=True,
+        first_name="Pooja", last_name="Adhikari"
+    )
+)
+if a_created:
+    agent_user.set_password("agent12345")
+    agent_user.save()
+    print("✓ Support Desk Agent created: agent@makwanpur.test / agent12345")
+
+# 4. Delivery Riders (KYC Verified vs Unverified)
+rider1_user, r1_created = User.objects.get_or_create(
+    email="bikash.thapa@makwanpur.test",
+    defaults=dict(
+        username="bikasthapa",
+        phone_number="+9779845000111",
+        role=User.Role.RIDER,
+        is_active=True,
+        is_phone_verified=True,
+        first_name="Bikash", last_name="Thapa"
+    )
+)
+if r1_created:
+    rider1_user.set_password("rider12345")
+    rider1_user.save()
+rider1, _ = RiderProfile.objects.get_or_create(
+    user=rider1_user,
+    defaults=dict(
+        vehicle_type=RiderProfile.VehicleType.BIKE,
+        kyc_status=RiderProfile.KYCStatus.VERIFIED,
+        is_available=True,
+        current_zone=zones_map["Hetauda Central Bazaar (Wards 1-5)"],
+        total_deliveries=142,
+        citizenship_number="27-01-76-04211",
+        license_number="01-06-889123",
+        vehicle_registration_number="Ba 19 Pa 4812",
+        permanent_address="Hetauda-4, Main Bazaar",
+        current_municipality="Hetauda",
+        current_ward=4,
+        kyc_verified_at=timezone.now() - timedelta(days=45),
+        kyc_verified_by=agent_user,
+        average_delivery_rating=Decimal("4.85"),
+        total_ratings=39
+    )
+)
+print(f"✓ Verified Rider: bikash.thapa@makwanpur.test / rider12345 ({rider1.get_kyc_status_display()})")
+
+rider2_user, r2_created = User.objects.get_or_create(
+    email="ramesh.rai@makwanpur.test",
+    defaults=dict(
+        username="rameshrai",
+        phone_number="+9779845000222",
+        role=User.Role.RIDER,
+        is_active=True,
+        is_phone_verified=True,
+        first_name="Ramesh", last_name="Rai"
+    )
+)
+if r2_created:
+    rider2_user.set_password("rider12345")
+    rider2_user.save()
+rider2, _ = RiderProfile.objects.get_or_create(
+    user=rider2_user,
+    defaults=dict(
+        vehicle_type=RiderProfile.VehicleType.BICYCLE,
+        kyc_status=RiderProfile.KYCStatus.PENDING,
+        is_available=False,
+        current_zone=zones_map["Hetauda Central Bazaar (Wards 1-5)"],
+        total_deliveries=0,
+        citizenship_number="27-01-78-99120",
+        permanent_address="Hetauda-2, Bank Road",
+        current_municipality="Hetauda",
+        current_ward=2
+    )
+)
+print(f"⏳ Unverified Rider: ramesh.rai@makwanpur.test / rider12345 ({rider2.get_kyc_status_display()})")
+
+# 5. Vendors — verified Hetauda shops
 vendors_data = [
     {
-        "email": "shrestha cloth@makwanpur.test",
+        "email": "shrestha_cloth@makwanpur.test",
         "shop_name": "Shrestha Cloth Store",
         "shop_slug": "shrestha-cloth-store",
         "category": "fashion",
@@ -155,7 +273,7 @@ vendors_data = [
 
 vendors = {}
 for v in vendors_data:
-    email = v["email"].replace(" ", "")
+    email = v["email"]
     user, u_created = User.objects.get_or_create(
         email=email,
         defaults=dict(
@@ -187,8 +305,8 @@ for v in vendors_data:
             average_rating=v["rating"],
             total_sales=v["sales"],
             total_reviews_count=v["reviews"],
-            trust_score= min(30 + int(float(v["rating"])*12) + v["sales"]//10 + min(v["reviews"],10), 100) if v["verified"] else 45,
-            is_trusted_seller = v["verified"] and float(v["rating"]) >= 4.2 and v["sales"] >= 50,
+            trust_score=min(30 + int(float(v["rating"])*12) + v["sales"]//10 + min(v["reviews"],10), 100) if v["verified"] else 45,
+            is_trusted_seller=v["verified"] and float(v["rating"]) >= 4.2 and v["sales"] >= 50,
             payout_method="esewa",
             payout_account_details="eSewa ID: 98XXXXXXXX (encrypted in prod)",
             return_window_days=3,
@@ -198,9 +316,9 @@ for v in vendors_data:
         )
     )
     vendors[v["shop_slug"]] = vendor
-    print(f"{'✓' if v['verified'] else '⏳'} Vendor: {vendor.shop_name} — {vendor.average_rating}★ — Trust {vendor.trust_score}/100 — {vendor.location_display}")
+    print(f"{'✓' if v['verified'] else '⏳'} Vendor: {vendor.shop_name} — {vendor.average_rating}★ — Trust {vendor.trust_score}/100")
 
-# 3. Products — approved, with transparent pricing, moderation passed
+# 6. Products — approved, with transparent pricing
 products_data = [
     # Shrestha Cloth Store
     dict(vendor="shrestha-cloth-store", name="Traditional Handloom Cotton Kurta Set with Dupatta", category="kurtas", price=2200, discounted_price=1850, stock=24, sku="SCC-KURTA-M-001", desc="Pure Hetauda handloom cotton, pre-shrunk, 3-piece kurta salwar dupatta. Sizes M/L/XL. Color: maroon, navy, mustard.", variants=[("M","Maroon",8,None),("L","Maroon",7,None),("XL","Navy",9,None)]),
@@ -239,7 +357,7 @@ for p in products_data:
     while Product.objects.filter(slug=slug).exists():
         slug = f"{slug_base}-{counter}"
         counter += 1
-        if counter>20: break
+        if counter > 20: break
     product, created = Product.objects.get_or_create(
         vendor=vendor,
         slug=slug,
@@ -254,7 +372,7 @@ for p in products_data:
             condition=Product.Condition.NEW,
             is_active=True,
             moderation_status=Product.ModerationStatus.APPROVED,
-            auto_flag_score=random.randint(0,12),
+            auto_flag_score=random.randint(0, 12),
             flagged_reasons=[],
             reviewed_at=timezone.now(),
             tax_rate=Decimal("13.00"),
@@ -262,8 +380,7 @@ for p in products_data:
         )
     )
     if created:
-        # variants
-        for size,color,stock,price_override in p.get("variants", []):
+        for size, color, stock, price_override in p.get("variants", []):
             ProductVariant.objects.create(
                 product=product,
                 size=size,
@@ -272,11 +389,9 @@ for p in products_data:
                 price_override=Decimal(str(price_override)) if price_override else None
             )
         created_products.append(product)
-        print(f"  + {product.name} — NPR {product.effective_price} — {vendor.shop_name} — {product.moderation_status}")
+        print(f"  + {product.name} — NPR {product.effective_price}")
 
-print(f"\n✅ Seeded {len(created_products)} new products, total live: {Product.objects.filter(is_active=True, moderation_status='approved').count()}")
-
-# 4. Demo customer + address
+# 7. Demo Customer & Address (with exact Makwanpur GPS pin)
 cust_email = "sita.shrestha@makwanpur.test"
 customer, created = User.objects.get_or_create(
     email=cust_email,
@@ -303,13 +418,85 @@ addr, _ = Address.objects.get_or_create(
         municipality="Hetauda",
         ward_number=4,
         is_default=True,
-        latitude=Decimal("27.4287"),
-        longitude=Decimal("85.0320"),
+        latitude=Decimal("27.428700"),
+        longitude=Decimal("85.032000"),
     )
 )
 
-# 5. Coupons
-from apps.orders.models import Coupon
+# 8. Sample Orders & Unassigned Delivery Drop Task (For Rider Dispatch Feed)
+sample_prod = created_products[0] if created_products else Product.objects.first()
+if sample_prod and Order.objects.count() == 0:
+    order = Order.objects.create(
+        customer=customer,
+        delivery_address=addr,
+        status=Order.Status.CONFIRMED,
+        subtotal=sample_prod.effective_price,
+        delivery_fee=Decimal("60.00"),
+        discount_amount=Decimal("0.00"),
+        total_amount=sample_prod.effective_price + Decimal("60.00"),
+        payment_method="cod",
+        payment_status=Order.PaymentStatus.PENDING,
+        special_instructions="Ring top floor bell upon arrival."
+    )
+    OrderItem.objects.create(
+        order=order,
+        product=sample_prod,
+        vendor=sample_prod.vendor,
+        quantity=1,
+        unit_price=sample_prod.effective_price,
+        commission_amount=sample_prod.effective_price * Decimal(str(sample_prod.vendor.commission_rate)) / Decimal("100"),
+        item_status=OrderItem.ItemStatus.CONFIRMED
+    )
+    # Unassigned drop task in rider dispatch feed
+    Delivery.objects.create(
+        order=order,
+        status=Delivery.Status.UNASSIGNED,
+        delivery_fee_owed_to_rider=Decimal("48.00")
+    )
+    print(f"✓ Sample Order #{order.order_number} and Unassigned Delivery created in Ward 4 dispatch pool")
+
+# 9. Support Tickets & Messages (For Support Agent Desk Console)
+if SupportTicket.objects.count() == 0:
+    ticket = SupportTicket.objects.create(
+        user=customer,
+        subject="Delivery time inquiry for Kurta Set order",
+        category="delivery_issue",
+        priority=SupportTicket.Priority.HIGH,
+        status=SupportTicket.Status.WAITING_CUSTOMER,
+        channel=SupportTicket.Channel.LIVE_CHAT,
+        order=Order.objects.first(),
+        assigned_to=agent_user,
+        first_response_at=timezone.now() - timedelta(minutes=15)
+    )
+    TicketMessage.objects.create(
+        ticket=ticket,
+        sender=customer,
+        sender_type=TicketMessage.SenderType.CUSTOMER,
+        sender_name="Sita Shrestha",
+        message="Namaste! I ordered the Traditional Kurta Set. Will your rider call before arriving at Pashupati Temple Gate?"
+    )
+    TicketMessage.objects.create(
+        ticket=ticket,
+        sender=agent_user,
+        sender_type=TicketMessage.SenderType.AGENT,
+        sender_name="Pooja Adhikari (Support Agent)",
+        message="Namaste Sita ji! Yes, our Hetauda rider Bikash Thapa is assigned to Ward 4 and will call your number +9779845123456 ~10 minutes prior to delivery."
+    )
+    print(f"✓ Sample Support Ticket #{ticket.ticket_number} seeded for Agent Desk Console")
+
+# 10. Formal Grievance Complaint (E-Commerce Act 2081)
+if GrievanceComplaint.objects.count() == 0 and Order.objects.exists():
+    GrievanceComplaint.objects.create(
+        order=Order.objects.first(),
+        raised_by=customer,
+        category="product_issue",
+        description="Requested size exchange for Kurta set. Need L instead of M.",
+        status="in_review",
+        resolution_notes="Mediator contacted Shrestha Cloth Store. Exchange approved at Ward 4 stall."
+    )
+    print("✓ Formal Grievance Complaint seeded for Legal Compliance Queue")
+
+# 11. Coupons
 now = timezone.now()
 coupons = [
     ("HETAUDA10", "percentage", 10, 30),
@@ -331,18 +518,17 @@ for code, dtype, val, days in coupons:
     )
     if created: print(f"  + Coupon {code}: {val}{'%' if dtype=='percentage' else ' NPR'}")
 
-# 6. Seller reviews (Trust & Transparency)
+# 12. Seller reviews (Trust & Transparency)
 if SellerReview.objects.count() < 10:
-    from apps.accounts.models import SellerReview
     sample_comments = [
-        ("Fast Hetauda delivery!", 5,5,5),
-        ("Authentic product, great seller communication.",5,4,5),
-        ("Size exchange handled at doorstep in 2hrs — wow.",5,5,4),
-        ("Good quality, a bit slow shipping Ward 10.",4,3,5),
-        ("Trusted seller — 3rd order.",5,5,5),
+        ("Fast Hetauda delivery!", 5, 5, 5),
+        ("Authentic product, great seller communication.", 5, 4, 5),
+        ("Size exchange handled at doorstep in 2hrs — wow.", 5, 5, 4),
+        ("Good quality, a bit slow shipping Ward 10.", 4, 3, 5),
+        ("Trusted seller — 3rd order.", 5, 5, 5),
     ]
-    for vendor in VendorProfile.objects.filter(is_verified=True)[:4]:
-        for i,(comment, comm, ship, acc) in enumerate(random.sample(sample_comments, 3)):
+    for vendor in VendorProfile.objects.filter(verification_status='verified')[:4]:
+        for i, (comment, comm, ship, acc) in enumerate(random.sample(sample_comments, 3)):
             SellerReview.objects.get_or_create(
                 vendor=vendor,
                 reviewer=customer,
@@ -363,11 +549,15 @@ if SellerReview.objects.count() < 10:
 print("\n" + "="*70)
 print("✅ Makwanpur Mart seed complete!")
 print(f"Categories: {Category.objects.count()}")
+print(f"Delivery Zones: {DeliveryZone.objects.count()}")
 print(f"Vendors: {VendorProfile.objects.count()}  (verified: {VendorProfile.objects.filter(verification_status='verified').count()})")
-print(f"Products live (approved): {Product.objects.filter(is_active=True, moderation_status='approved').count()}")
-print(f"Users: {User.objects.count()}")
-print("\nLogin accounts:")
-print("  Admin / seller / customer — create via createsuperuser, or:")
-print("  customer: sita.shrestha@makwanpur.test / customer123")
-print("  vendors : *@makwanpur.test / vendor12345")
+print(f"Products live: {Product.objects.filter(is_active=True, moderation_status='approved').count()}")
+print(f"Users: {User.objects.count()} (Riders: {RiderProfile.objects.count()})")
+print(f"Support Tickets: {SupportTicket.objects.count()} | Grievances: {GrievanceComplaint.objects.count()}")
+print("\n🔑 Login Credentials:")
+print("  Support Desk Agent : agent@makwanpur.test / agent12345")
+print("  Customer           : sita.shrestha@makwanpur.test / customer123")
+print("  Verified Rider     : bikash.thapa@makwanpur.test / rider12345")
+print("  Unverified Rider   : ramesh.rai@makwanpur.test / rider12345")
+print("  Vendors            : shrestha_cloth@makwanpur.test / vendor12345")
 print("\nNext: python manage.py runserver")

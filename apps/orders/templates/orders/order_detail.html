@@ -1,71 +1,158 @@
 {% extends "base.html" %}
-{% block title %}Order #MM-2026-8492 Timeline — Makwanpur Mart{% endblock %}
+{% block title %}Order #{{ order.order_number }} Timeline — Makwanpur Mart{% endblock %}
 {% block content %}
-<div class="max-w-4xl mx-auto space-y-8">
-    <div class="bg-white p-6 rounded-stall border border-neutral-200 shadow-sm flex justify-between items-center">
+<div class="max-w-4xl mx-auto space-y-8 my-6">
+    <!-- Header -->
+    <div class="bg-white p-6 rounded-stall border border-neutral-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-            <h1 class="font-display font-bold text-2xl text-brand-green">Order Details #MM-2026-8492</h1>
-            <p class="text-xs text-neutral-500">Placed on July 04, 2026 &bull; Total Paid: NPR 1,950 (COD)</p>
+            <div class="flex items-center gap-2">
+                <span class="font-mono font-bold text-xs bg-surface-base border px-2 py-0.5 rounded">Order #{{ order.order_number }}</span>
+                <span class="text-xs text-neutral-500">&bull; Placed on {{ order.placed_at|date:"M d, Y H:i" }}</span>
+            </div>
+            <h1 class="font-display font-bold text-2xl text-brand-green mt-1">Order Tracking &amp; Timeline</h1>
+            <p class="text-xs text-neutral-600 mt-0.5">Total Payable: <strong class="text-brand-green">NPR {{ order.total_amount }}</strong> ({{ order.get_payment_method_display }} — {{ order.get_payment_status_display }})</p>
         </div>
-        <span class="bg-state-warning text-white font-bold text-xs px-3 py-1.5 rounded-full">Out for Delivery</span>
+        <div class="flex items-center gap-3">
+            <span class="px-3.5 py-1.5 rounded-full text-xs font-bold uppercase {% if order.status == 'delivered' %}bg-state-success text-white{% elif order.status == 'cancelled' %}bg-state-error text-white{% else %}bg-state-warning text-white{% endif %}">
+                {{ order.get_status_display }}
+            </span>
+            <a href="{% url 'orders:order_list' %}" class="bg-surface-base border px-4 py-2 rounded text-xs font-bold hover:bg-neutral-100">← All Orders</a>
+        </div>
     </div>
 
     <!-- CRITICAL UNEXCLUDEABLE ELEMENT: GRANULAR ORDER STATUS TIMELINE WITH TIMESTAMPS -->
     <div class="bg-white p-8 rounded-stall border-2 border-brand-green shadow-sm space-y-6">
-        <div class="border-b pb-3">
-            <span class="bg-brand-marigold text-surface-ink font-display font-bold text-xs px-2.5 py-0.5 stall-flag uppercase">Core Differentiator</span>
-            <h2 class="font-display font-bold text-2xl text-brand-green mt-1">Granular Hyperlocal Fulfillment Timeline</h2>
-            <p class="text-xs text-neutral-600">Unlike generic Megacity tracking, every local handoff in Hetauda is timestamped directly below.</p>
+        <div class="border-b pb-3 flex justify-between items-center">
+            <div>
+                <span class="bg-brand-marigold text-surface-ink font-display font-bold text-[10px] px-2.5 py-0.5 stall-flag uppercase">Granular Tracking</span>
+                <h2 class="font-display font-bold text-2xl text-brand-green mt-1">Hyperlocal Fulfillment Timeline</h2>
+                <p class="text-xs text-neutral-600">Real-time local handoffs in Hetauda Ward #{{ order.delivery_address.ward_number }} timestamped directly below.</p>
+            </div>
+            {% if delivery %}
+            <a href="{% url 'delivery:delivery_detail' delivery_id=delivery.id %}" class="bg-brand-indigo text-white font-bold px-4 py-2 rounded text-xs shadow hover:brightness-110">
+                📍 Inspect Delivery Drop Map
+            </a>
+            {% endif %}
         </div>
 
+        {% if order.status == 'cancelled' %}
+        <div class="p-5 bg-state-error/10 border-2 border-state-error rounded-stall space-y-2">
+            <strong class="text-state-error font-display text-lg block">🚫 Order Cancelled</strong>
+            <p class="text-sm text-neutral-800">Reason: {{ order.cancellation_reason|default:"No cancellation reason provided." }}</p>
+            <span class="text-xs text-neutral-500">{{ order.updated_at|date:"M d, Y H:i:s" }}</span>
+        </div>
+        {% else %}
         <div class="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-brand-green/30">
             <!-- Timeline Step 1: Placed -->
             <div class="relative">
                 <span class="absolute -left-6 top-1 w-4 h-4 rounded-full bg-state-success border-2 border-white shadow"></span>
                 <div class="flex justify-between items-baseline">
                     <strong class="font-display font-bold text-base text-surface-ink">1. Order Placed by Customer</strong>
-                    <span class="text-xs text-neutral-500 tabular-nums">July 04, 2026 — 14:15:02</span>
+                    <span class="text-xs text-neutral-500 tabular-nums">{{ order.placed_at|date:"M d, Y — H:i:s" }}</span>
                 </div>
-                <p class="text-xs text-neutral-600">Order recorded and Sparrow SMS notification dispatched to vendor.</p>
+                <p class="text-xs text-neutral-600">Order recorded and Sparrow SMS notification dispatched to vendor stall.</p>
             </div>
 
             <!-- Timeline Step 2: Confirmed -->
-            <div class="relative">
-                <span class="absolute -left-6 top-1 w-4 h-4 rounded-full bg-state-success border-2 border-white shadow"></span>
+            <div class="relative {% if order.status == 'pending' %}opacity-50{% endif %}">
+                <span class="absolute -left-6 top-1 w-4 h-4 rounded-full {% if order.status != 'pending' %}bg-state-success{% else %}bg-neutral-300{% endif %} border-2 border-white shadow"></span>
                 <div class="flex justify-between items-baseline">
-                    <strong class="font-display font-bold text-base text-surface-ink">2. Confirmed by Vendor (Shrestha Cloth Store)</strong>
-                    <span class="text-xs text-neutral-500 tabular-nums">July 04, 2026 — 14:22:18</span>
+                    <strong class="font-display font-bold text-base text-surface-ink">2. Confirmed by Vendor Stall</strong>
+                    {% if order.confirmed_at %}
+                    <span class="text-xs text-neutral-500 tabular-nums">{{ order.confirmed_at|date:"M d, Y — H:i:s" }}</span>
+                    {% elif order.status != 'pending' %}
+                    <span class="text-xs text-neutral-500 tabular-nums">{{ order.updated_at|date:"M d, Y — H:i:s" }}</span>
+                    {% else %}
+                    <span class="text-xs text-neutral-400">Pending confirmation</span>
+                    {% endif %}
                 </div>
-                <p class="text-xs text-neutral-600">Vendor verified item availability in Ward 4 store.</p>
+                <p class="text-xs text-neutral-600">Vendor verified item stock and began packaging.</p>
             </div>
 
-            <!-- Timeline Step 3: Preparing -->
-            <div class="relative">
-                <span class="absolute -left-6 top-1 w-4 h-4 rounded-full bg-state-success border-2 border-white shadow"></span>
+            <!-- Timeline Step 3: Preparing & Rider Assigned -->
+            <div class="relative {% if not delivery.rider %}opacity-50{% endif %}">
+                <span class="absolute -left-6 top-1 w-4 h-4 rounded-full {% if delivery.rider %}bg-state-success{% else %}bg-neutral-300{% endif %} border-2 border-white shadow"></span>
                 <div class="flex justify-between items-baseline">
-                    <strong class="font-display font-bold text-base text-surface-ink">3. Item Packaged &amp; Rider Assigned</strong>
-                    <span class="text-xs text-neutral-500 tabular-nums">July 04, 2026 — 14:48:40</span>
+                    <strong class="font-display font-bold text-base text-surface-ink">3. Dispatched &amp; Rider Assigned</strong>
+                    {% if delivery.assigned_at %}
+                    <span class="text-xs text-neutral-500 tabular-nums">{{ delivery.assigned_at|date:"M d, Y — H:i:s" }}</span>
+                    {% else %}
+                    <span class="text-xs text-neutral-400">Waiting for local rider</span>
+                    {% endif %}
                 </div>
-                <p class="text-xs text-neutral-600">Assigned local rider Bikash Thapa (Rider #12).</p>
+                <p class="text-xs text-neutral-600">
+                    {% if delivery.rider %}
+                    Assigned Hetauda rider: <strong class="text-brand-green">{{ delivery.rider.user.get_full_name|default:delivery.rider.user.username }}</strong> ({{ delivery.rider.get_vehicle_type_display }})
+                    {% else %}
+                    Order is queued in the Ward #{{ order.delivery_address.ward_number }} dispatch pool.
+                    {% endif %}
+                </p>
             </div>
 
-            <!-- Timeline Step 4: Out for Delivery (Active) -->
-            <div class="relative">
-                <span class="absolute -left-6 top-1 w-4 h-4 rounded-full bg-state-warning animate-pulse border-2 border-white shadow"></span>
+            <!-- Timeline Step 4: Out for Delivery -->
+            <div class="relative {% if delivery.status != 'picked_up' and delivery.status != 'delivered' %}opacity-50{% endif %}">
+                <span class="absolute -left-6 top-1 w-4 h-4 rounded-full {% if delivery.status == 'picked_up' or delivery.status == 'delivered' %}bg-state-warning animate-pulse{% else %}bg-neutral-300{% endif %} border-2 border-white shadow"></span>
                 <div class="flex justify-between items-baseline">
-                    <strong class="font-display font-bold text-base text-state-warning">4. Out for Delivery in Hetauda Ward #4</strong>
-                    <span class="text-xs text-brand-marigold font-bold tabular-nums">July 04, 2026 — 15:10:05</span>
+                    <strong class="font-display font-bold text-base {% if delivery.status == 'picked_up' %}text-state-warning{% else %}text-surface-ink{% endif %}">4. Out for Delivery in Ward #{{ order.delivery_address.ward_number }}</strong>
+                    {% if delivery.picked_up_at %}
+                    <span class="text-xs text-brand-marigold font-bold tabular-nums">{{ delivery.picked_up_at|date:"M d, Y — H:i:s" }}</span>
+                    {% else %}
+                    <span class="text-xs text-neutral-400">Awaiting rider pickup</span>
+                    {% endif %}
                 </div>
-                <p class="text-xs text-neutral-800 font-medium">Rider en route to your landmark opposite Pashupati Temple Gate.</p>
+                <p class="text-xs text-neutral-700">Rider en route to landmark: {{ order.delivery_address.landmark|default:"Customer address" }}.</p>
             </div>
 
             <!-- Timeline Step 5: Delivered -->
-            <div class="relative opacity-40">
-                <span class="absolute -left-6 top-1 w-4 h-4 rounded-full bg-neutral-300 border-2 border-white"></span>
+            <div class="relative {% if order.status != 'delivered' %}opacity-40{% endif %}">
+                <span class="absolute -left-6 top-1 w-4 h-4 rounded-full {% if order.status == 'delivered' %}bg-state-success{% else %}bg-neutral-300{% endif %} border-2 border-white shadow"></span>
                 <div class="flex justify-between items-baseline">
-                    <strong class="font-display font-bold text-base text-neutral-500">5. Package Delivered &amp; COD Collected</strong>
-                    <span class="text-xs text-neutral-400">Pending arrival</span>
+                    <strong class="font-display font-bold text-base {% if order.status == 'delivered' %}text-state-success{% else %}text-neutral-500{% endif %}">5. Package Delivered &amp; Handover Complete</strong>
+                    {% if order.delivered_at or delivery.delivered_at %}
+                    <span class="text-xs text-state-success font-bold tabular-nums">{{ order.delivered_at|default:delivery.delivered_at|date:"M d, Y — H:i:s" }}</span>
+                    {% else %}
+                    <span class="text-xs text-neutral-400">Pending final doorstep handover</span>
+                    {% endif %}
                 </div>
+                <p class="text-xs text-neutral-600">Doorstep delivery completed and COD verified.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Order Items Summary & Destination -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white p-6 rounded-stall border shadow-sm space-y-3">
+            <h3 class="font-display font-bold text-lg text-brand-green border-b pb-2">Destined Delivery Address</h3>
+            <div class="text-sm space-y-1">
+                <div><strong>Recipient:</strong> {{ order.customer.get_full_name|default:order.customer.username }}</div>
+                <div><strong>Phone:</strong> {{ order.customer.phone_number }}</div>
+                <div><strong>Municipality:</strong> {{ order.delivery_address.municipality }} (Ward #{{ order.delivery_address.ward_number }})</div>
+                <div><strong>Address:</strong> {{ order.delivery_address.full_address }}</div>
+                <div><strong>Mandatory Landmark:</strong> <span class="bg-brand-marigold/30 px-1.5 py-0.5 rounded font-bold">{{ order.delivery_address.landmark|default:"None specified" }}</span></div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-stall border shadow-sm space-y-3">
+            <h3 class="font-display font-bold text-lg text-brand-green border-b pb-2">Order Items Breakdown</h3>
+            <div class="divide-y text-xs space-y-2">
+                {% for item in items %}
+                <div class="pt-2 flex justify-between items-center">
+                    <div>
+                        <strong class="font-display text-sm block">{{ item.quantity }}x {{ item.product.name }}</strong>
+                        <span class="text-neutral-500">Stall: {{ item.vendor.shop_name }}</span>
+                    </div>
+                    <span class="font-bold tabular-nums">NPR {% widthratio item.unit_price 1 item.quantity %}</span>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="border-t pt-3 flex justify-between font-bold text-sm">
+                <span>Delivery Fee (Ward tiered):</span>
+                <span>NPR {{ order.delivery_fee }}</span>
+            </div>
+            <div class="flex justify-between font-display font-bold text-base text-brand-green border-t pt-2">
+                <span>Total Amount:</span>
+                <span>NPR {{ order.total_amount }}</span>
             </div>
         </div>
     </div>

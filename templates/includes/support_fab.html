@@ -88,11 +88,13 @@ Admin can read/respond via /admin/support/supportticket/
             <div class="text-[11px] text-neutral-600 pt-2 border-t">
                 Hetauda Office, Ward 4<br>☎ +977-57-XXXXXX • support@makwanpurmart.np
             </div>
-            {% if user.is_staff %}
-            <div class="bg-brand-indigo text-white p-2 rounded text-[11px]">
-                <strong>Agent:</strong>
-                <a href="/admin/support/supportticket/" class="underline">Ticket Queue</a> •
-                <a href="{% url 'support:admin_complaint_queue' %}" class="underline">Grievances</a>
+            {% if user.is_staff or user.role == 'admin' %}
+            <div class="bg-brand-indigo text-white p-2.5 rounded text-[11px] space-y-1">
+                <strong class="block text-brand-marigold">Support Desk Portal:</strong>
+                <div>
+                    <a href="{% url 'support:agent_console' %}" class="underline font-bold">🎧 Live Chat Console</a> •
+                    <a href="{% url 'support:admin_complaint_queue' %}" class="underline font-bold">⚖️ Grievances</a>
+                </div>
             </div>
             {% endif %}
         </div>

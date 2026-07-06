@@ -300,10 +300,11 @@ def validate_delivery_zone(address: Address) -> dict:
     """
     from apps.delivery.models import DeliveryZone
     
-    zone = DeliveryZone.objects.filter(
-        is_active=True,
-        ward_numbers__contains=address.ward_number
-    ).first()
+    zone = None
+    for z in DeliveryZone.objects.filter(is_active=True):
+        if address.ward_number in (z.ward_numbers or []):
+            zone = z
+            break
     
     if zone:
         return {

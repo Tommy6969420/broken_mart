@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Support Desk Agent Console — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="space-y-6 max-w-7xl mx-auto">
+    <!-- Header & KPI Bar -->
+    <div class="bg-brand-green text-white p-6 rounded-stall shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <span class="bg-state-success text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">Live Agent Portal</span>
+            <h1 class="font-display font-bold text-3xl mt-1 flex items-center gap-3">
+                🎧 Support Desk Console
+            </h1>
+            <p class="text-xs text-neutral-300 mt-0.5">Real-time customer communication desk • E-Commerce Act 2081 compliant SLA</p>
+        </div>
+        <div class="flex flex-wrap gap-2 text-xs">
+            <a href="{% url 'support:agent_console' %}?status=open" class="bg-white/10 hover:bg-white/20 px-3 py-2 rounded-stall font-bold border border-white/20">
+                🟡 Open Tickets <span class="bg-brand-marigold text-surface-ink px-1.5 py-0.5 rounded-full ml-1">{{ stats.open_count }}</span>
+            </a>
+            <a href="{% url 'support:agent_console' %}?status=waiting_customer" class="bg-white/10 hover:bg-white/20 px-3 py-2 rounded-stall font-bold border border-white/20">
+                ⏳ Waiting Reply <span class="bg-white text-brand-green px-1.5 py-0.5 rounded-full ml-1">{{ stats.waiting_count }}</span>
+            </a>
+            <a href="{% url 'support:admin_complaint_queue' %}" class="bg-state-error text-white hover:brightness-110 px-3 py-2 rounded-stall font-bold shadow">
+                ⚖️ Formal Grievances <span class="bg-white text-state-error px-1.5 py-0.5 rounded-full ml-1">{{ stats.grievance_count }}</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Status Filters -->
+    <div class="flex gap-2 border-b pb-3 text-xs font-bold overflow-x-auto">
+        <a href="{% url 'support:agent_console' %}?status=open" class="px-4 py-2 rounded-stall {% if status_filter == 'open' %}bg-brand-green text-white shadow{% else %}bg-surface-base text-neutral-600 hover:bg-neutral-200{% endif %}">Active & Open Queue</a>
+        <a href="{% url 'support:agent_console' %}?status=waiting_customer" class="px-4 py-2 rounded-stall {% if status_filter == 'waiting_customer' %}bg-brand-green text-white shadow{% else %}bg-surface-base text-neutral-600 hover:bg-neutral-200{% endif %}">Waiting for Customer</a>
+        <a href="{% url 'support:agent_console' %}?status=in_progress" class="px-4 py-2 rounded-stall {% if status_filter == 'in_progress' %}bg-brand-green text-white shadow{% else %}bg-surface-base text-neutral-600 hover:bg-neutral-200{% endif %}">In Progress</a>
+        <a href="{% url 'support:agent_console' %}?status=resolved" class="px-4 py-2 rounded-stall {% if status_filter == 'resolved' %}bg-brand-green text-white shadow{% else %}bg-surface-base text-neutral-600 hover:bg-neutral-200{% endif %}">Resolved</a>
+        <a href="{% url 'support:agent_console' %}?status=all" class="px-4 py-2 rounded-stall {% if status_filter == 'all' %}bg-brand-green text-white shadow{% else %}bg-surface-base text-neutral-600 hover:bg-neutral-200{% endif %}">All Tickets</a>
+    </div>
+
+    <!-- Split Screen Interface -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[720px]">
+        <!-- Left Column: Ticket List Queue (4 cols) -->
+        <div class="lg:col-span-4 bg-white rounded-stall border border-neutral-200 shadow-sm flex flex-col overflow-hidden">
+            <div class="bg-surface-base p-3 border-b font-display font-bold text-sm text-brand-green flex justify-between items-center">
+                <span>Conversation Queue</span>
+                <span class="text-xs text-neutral-500">{{ tickets.count }} tickets</span>
+            </div>
+            <div class="flex-grow overflow-y-auto divide-y">
+                {% for t in tickets %}
+                <a href="{% url 'support:agent_console_ticket' ticket_id=t.id %}?status={{ status_filter }}" class="block p-4 transition {% if active_ticket and active_ticket.id == t.id %}bg-brand-green/10 border-l-4 border-brand-green{% else %}hover:bg-neutral-50{% endif %} space-y-1.5">
+                    <div class="flex justify-between items-start text-xs">
+                        <span class="font-mono font-bold text-brand-indigo">{{ t.ticket_number }}</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase {% if t.status == 'open' %}bg-state-warning/20 text-state-warning{% elif t.status == 'resolved' %}bg-state-success/20 text-state-success{% else %}bg-neutral-200 text-neutral-700{% endif %}">{{ t.get_status_display }}</span>
+                    </div>
+                    <div class="font-display font-bold text-sm text-surface-ink truncate">{{ t.subject }}</div>
+                    <div class="flex justify-between items-center text-[11px] text-neutral-500">
+                        <span>👤 {% if t.user %}{{ t.user.get_full_name|default:t.user.username }}{% else %}{{ t.guest_email|default:"Guest Customer" }}{% endif %}</span>
+                        <span class="bg-surface-base border px-1.5 py-0.5 rounded">{{ t.get_channel_display }}</span>
+                    </div>
+                </a>
+                {% empty %}
+                <div class="p-8 text-center text-sm text-neutral-500">
+                    No tickets found in this queue view.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Right Column: Active Thread & Reply Box (8 cols) -->
+        <div class="lg:col-span-8 bg-white rounded-stall border border-neutral-200 shadow-sm flex flex-col overflow-hidden">
+            {% if active_ticket %}
+                <!-- Active Ticket Header -->
+                <div class="bg-surface-base p-4 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-mono font-bold text-xs bg-white border px-2 py-0.5 rounded">{{ active_ticket.ticket_number }}</span>
+                            <span class="font-display font-bold text-lg text-brand-green">{{ active_ticket.subject }}</span>
+                        </div>
+                        <div class="text-xs text-neutral-600 mt-1 flex flex-wrap gap-3">
+                            <span>Customer: <strong class="text-surface-ink">{% if active_ticket.user %}{{ active_ticket.user.get_full_name|default:active_ticket.user.email }}{% else %}Guest{% endif %}</strong></span>
+                            {% if active_ticket.user and active_ticket.user.phone_number %}
+                            <span>📞 <a href="tel:{{ active_ticket.user.phone_number }}" class="underline font-bold text-brand-green">{{ active_ticket.user.phone_number }}</a></span>
+                            {% endif %}
+                            {% if active_ticket.order %}
+                            <span>Order: <a href="{% url 'orders:order_detail' order_id=active_ticket.order.id %}" class="underline font-bold text-brand-indigo">#{{ active_ticket.order.order_number }}</a></span>
+                            {% endif %}
+                            <span>Assigned: <strong>{% if active_ticket.assigned_to %}{{ active_ticket.assigned_to.get_full_name|default:active_ticket.assigned_to.username }}{% else %}Unassigned{% endif %}</strong></span>
+                        </div>
+                    </div>
+
+                    <!-- Status Action Controls -->
+                    <form action="{% url 'support:agent_ticket_status' ticket_id=active_ticket.id %}" method="post" class="flex items-center gap-2">
+                        {% csrf_token %}
+                        {% if not active_ticket.assigned_to or active_ticket.assigned_to != request.user %}
+                        <button type="submit" name="assign_me" value="1" class="bg-brand-indigo text-white px-3 py-1.5 rounded text-xs font-bold shadow hover:brightness-110">🙋 Assign to Me</button>
+                        {% endif %}
+                        {% if active_ticket.status != 'resolved' %}
+                        <button type="submit" name="status" value="resolved" class="bg-state-success text-white px-3 py-1.5 rounded text-xs font-bold shadow hover:brightness-110">✓ Mark Resolved</button>
+                        {% else %}
+                        <button type="submit" name="status" value="open" class="bg-neutral-600 text-white px-3 py-1.5 rounded text-xs font-bold">Reopen</button>
+                        {% endif %}
+                    </form>
+                </div>
+
+                <!-- Messages Thread Scroll Panel -->
+                <div class="flex-grow overflow-y-auto p-6 space-y-4 bg-neutral-50/50">
+                    {% for m in messages_list %}
+                    <div class="flex flex-col {% if m.sender_type == 'agent' %}items-end{% elif m.sender_type == 'system' or m.sender_type == 'bot' %}items-center{% else %}items-start{% endif %}">
+                        <div class="max-w-[75%] rounded-stall p-3 text-xs shadow-sm {% if m.is_internal_note %}bg-state-warning/20 border-2 border-brand-marigold text-neutral-900{% elif m.sender_type == 'agent' %}bg-brand-green text-white{% elif m.sender_type == 'bot' %}bg-brand-indigo/10 border border-brand-indigo text-neutral-800 text-center{% else %}bg-white border text-neutral-800{% endif %}">
+                            <div class="flex justify-between items-center gap-4 mb-1 border-b {% if m.sender_type == 'agent' %}border-white/20{% else %}border-neutral-200{% endif %} pb-1">
+                                <span class="font-bold">{% if m.is_internal_note %}🔒 INTERNAL NOTE — {% endif %}{{ m.sender_name|default:m.get_sender_type_display }}</span>
+                                <span class="text-[10px] opacity-75">{{ m.created_at|date:"M d, H:i" }}</span>
+                            </div>
+                            <div class="whitespace-pre-wrap leading-relaxed">{{ m.message }}</div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-12 text-sm text-neutral-500">
+                        No messages in this thread yet.
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Agent Reply Form -->
+                <form action="{% url 'support:agent_ticket_reply' ticket_id=active_ticket.id %}" method="post" class="p-4 bg-white border-t space-y-3">
+                    {% csrf_token %}
+                    <textarea name="message" required rows="3" placeholder="Type public response to customer (pushes directly to live chat & ticket)..." class="w-full bg-surface-base border border-neutral-300 rounded-stall p-3 text-xs focus:border-brand-green outline-none"></textarea>
+                    
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-3">
+                        <div class="flex items-center gap-4">
+                            <label class="flex items-center gap-2 text-xs font-semibold cursor-pointer bg-state-warning/15 px-3 py-1.5 rounded border border-state-warning/40">
+                                <input type="checkbox" name="is_internal_note" value="1" class="rounded text-brand-marigold">
+                                <span>🔒 Save as Internal Agent Note (Hidden from Customer)</span>
+                            </label>
+                        </div>
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <select name="status" class="bg-surface-base border rounded px-3 py-1.5 text-xs font-semibold">
+                                <option value="waiting_customer">Send & Set: Waiting for Customer</option>
+                                <option value="resolved">Send & Mark Resolved</option>
+                                <option value="in_progress">Send & Keep In Progress</option>
+                            </select>
+                            <button type="submit" class="bg-brand-green text-white font-display font-bold px-6 py-2 rounded-stall text-xs shadow hover:brightness-110">
+                                Send Reply →
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            {% else %}
+                <div class="flex-grow flex items-center justify-center p-8 text-center text-neutral-500">
+                    <div>
+                        <div class="text-4xl mb-2">💬</div>
+                        <h3 class="font-display font-bold text-lg text-neutral-700">Select a Ticket or Conversation</h3>
+                        <p class="text-xs text-neutral-500 mt-1">Click any active customer inquiry from the left queue to start chatting.</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

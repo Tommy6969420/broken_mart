@@ -347,17 +347,29 @@ class OrderListView(LoginRequiredMixin, ListView):
 
 
 class OrderDetailView(LoginRequiredMixin, View):
-    """Display order details."""
+    """Display order details and granular timeline."""
     
     template_name = 'orders/order_detail.html'
     
     def get(self, request, order_id):
-        order = get_object_or_404(Order, id=order_id, customer=request.user)
+        order = get_object_or_404(Order, id=order_id)
+        user = request.user
+        
+        is_authorized = (
+            order.customer == user or
+            order.items.filter(vendor__user=user).exists() or
+            (hasattr(order, 'delivery') and order.delivery.rider and order.delivery.rider.user == user) or
+            user.is_staff or
+            user.role == User.Role.ADMIN
+        )
+        if not is_authorized:
+            raise PermissionDenied("You are not authorized to view this order timeline.")
         
         context = {
             'order': order,
             'items': order.items.select_related('product', 'variant', 'vendor'),
             'transactions': order.transactions.all().order_by('-created_at'),
+            'delivery': getattr(order, 'delivery', None),
         }
         
         return render(request, self.template_name, context)

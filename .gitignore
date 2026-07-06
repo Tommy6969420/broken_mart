@@ -16,3 +16,6 @@ __pycache__/
 
 # OS files
 .DS_Store
+logs/makwanpur_mart.log
+logs/security.log
+
