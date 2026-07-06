@@ -1,0 +1,18 @@
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Django migrations
+*/migrations/
+*/migrations/*
+# Keep migration init files if needed
+!*/migrations/__init__.py
+
+# Database files
+*.sqlite3
+*.db
+*.sqlite
+
+# OS files
+.DS_Store

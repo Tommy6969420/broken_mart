@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+{% block title %}Search: {{ query|default:request.GET.q }} — Makwanpur Mart{% endblock %}
+
+{% block content %}
+<div class="space-y-6" x-data="{ showMobileFilters: false }">
+    <!-- Search Query Echo & Header -->
+    <div class="bg-white p-6 rounded-stall border border-neutral-200 shadow-sm">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+            <div>
+                <h1 class="font-display font-bold text-2xl text-brand-green">
+                    {% if query %}
+                    Results for "<span class="text-brand-marigold">{{ query }}</span>"
+                    {% else %}
+                    Advanced Bazaar Search
+                    {% endif %}
+                </h1>
+                <p class="text-sm text-neutral-600">
+                    {% if results %}
+                    Showing <span class="font-bold text-surface-ink">{{ total_count }} items</span> 
+                    {% if results.0.vendor.is_verified %}from verified Hetauda stalls{% endif %}
+                    • Sorted by <strong>{{ request.GET.sort|default:"relevance" }}</strong>
+                    {% else %}
+                    Search across {{ categories|length|default:"50" }}+ verified Hetauda shops
+                    {% endif %}
+                </p>
+            </div>
+            <!-- Secondary Search Bar with suggestions -->
+            <form action="{% url 'core:search_results' %}" method="get" class="flex gap-2 max-w-sm w-full"
+                  hx-get="{% url 'catalog:search_suggestions' %}" hx-trigger="keyup changed delay:300ms" hx-target="#suggestions-box">
+                <input type="text" name="q" value="{{ query|default:request.GET.q }}" placeholder="Search products, sellers, categories…"
+                       class="bg-surface-base border border-neutral-300 rounded-stall px-3 py-2 text-sm flex-grow focus:border-brand-marigold"
+                       autocomplete="off">
+                <button type="submit" class="bg-brand-green text-white px-4 py-2 rounded-stall text-sm font-display font-semibold">Search</button>
+            </form>
+        </div>
+        <div id="suggestions-box" class="text-xs mt-2"></div>
+    </div>
+
+    <!-- Layout: Filter Sidebar + Result Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <!-- Advanced Filter Sidebar -->
+        <div class="bg-white p-5 rounded-stall border border-neutral-200 shadow-sm space-y-5 h-fit lg:sticky lg:top-24">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-display font-bold text-lg text-brand-green">Advanced Filters</h3>
+                <a href="{% url 'core:search_results' %}?q={{ query }}" class="text-[11px] text-brand-indigo hover:underline">Clear</a>
+            </div>
+            
+            <form method="get" action="{% url 'core:search_results' %}" id="advanced-search-form" class="space-y-5">
+                <input type="hidden" name="q" value="{{ query|default:request.GET.q }}">
+                
+                <!-- Category Filter -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-neutral-700 uppercase tracking-wider">Category</label>
+                    <select name="category" class="w-full bg-surface-base border border-neutral-300 rounded-stall px-2.5 py-2 text-sm">
+                        <option value="">All Categories</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.slug }}" {% if request.GET.category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Price Range Filter -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-neutral-700 uppercase tracking-wider">Price Range (NPR)</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="number" name="min_price" placeholder="Min" value="{{ request.GET.min_price }}"
+                               class="bg-surface-base border border-neutral-300 rounded-stall px-2 py-1.5 text-sm tabular-nums">
+                        <input type="number" name="max_price" placeholder="Max" value="{{ request.GET.max_price }}"
+                               class="bg-surface-base border border-neutral-300 rounded-stall px-2 py-1.5 text-sm tabular-nums">
+                    </div>
+                    <div class="flex gap-1 flex-wrap text-[11px]">
+                        <button type="button" onclick="this.form.min_price.value='';this.form.max_price.value='1000'" class="px-2 py-0.5 bg-surface-base border rounded">Under 1k</button>
+                        <button type="button" onclick="this.form.min_price.value='1000';this.form.max_price.value='3000'" class="px-2 py-0.5 bg-surface-base border rounded">1k-3k</button>
+                        <button type="button" onclick="this.form.min_price.value='3000';this.form.max_price.value=''" class="px-2 py-0.5 bg-surface-base border rounded">3k+</button>
+                    </div>
+                </div>
+
+                <!-- Rating Filter — NEW -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-neutral-700 uppercase tracking-wider">Minimum Seller Rating</label>
+                    <select name="min_rating" class="w-full bg-surface-base border border-neutral-300 rounded-stall px-2.5 py-2 text-sm">
+                        <option value="">Any rating</option>
+                        <option value="4.5" {% if request.GET.min_rating == '4.5' %}selected{% endif %}>★★★★½ 4.5+ Excellent</option>
+                        <option value="4.0" {% if request.GET.min_rating == '4.0' %}selected{% endif %}>★★★★ 4.0+ Very Good</option>
+                        <option value="3.5" {% if request.GET.min_rating == '3.5' %}selected{% endif %}>★★★½ 3.5+ Good</option>
+                        <option value="3.0" {% if request.GET.min_rating == '3.0' %}selected{% endif %}>★★★ 3.0+ OK</option>
+                    </select>
+                </div>
+
+                <!-- Location Filter — NEW -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-neutral-700 uppercase tracking-wider">Shop Location</label>
+                    <select name="municipality" class="w-full bg-surface-base border border-neutral-300 rounded-stall px-2.5 py-2 text-sm mb-1">
+                        <option value="">All Makwanpur</option>
+                        <option value="Hetauda" {% if request.GET.municipality == 'Hetauda' %}selected{% endif %}>Hetauda (default)</option>
+                        <option value="Thaha" {% if request.GET.municipality == 'Thaha' %}selected{% endif %}>Thaha</option>
+                        <option value="Manahari" {% if request.GET.municipality == 'Manahari' %}selected{% endif %}>Manahari</option>
+                        <option value="Bagmati" {% if request.GET.municipality == 'Bagmati' %}selected{% endif %}>Bagmati</option>
+                    </select>
+                    <select name="ward_number" class="w-full bg-surface-base border border-neutral-300 rounded-stall px-2.5 py-1.5 text-sm">
+                        <option value="">All Wards (1-19)</option>
+                        {% for w in "12345678910111213141516171819"|make_list %}
+                        {% if w %}{% endif %}{% endfor %}
+                        <option value="4" {% if request.GET.ward_number == '4' %}selected{% endif %}>Ward 4 — Main Bazaar</option>
+                        <option value="2" {% if request.GET.ward_number == '2' %}selected{% endif %}>Ward 2 — Bank Road</option>
+                        <option value="10" {% if request.GET.ward_number == '10' %}selected{% endif %}>Ward 10 — Industrial</option>
+                        <option value="1" {% if request.GET.ward_number == '1' %}selected{% endif %}>Ward 1</option>
+                        <option value="5" {% if request.GET.ward_number == '5' %}selected{% endif %}>Ward 5</option>
+                    </select>
+                </div>
+
+                <!-- Trust filters -->
+                <div class="space-y-2 pt-2 border-t text-sm">
+                    <label class="flex items-center gap-2 font-medium text-brand-indigo">
+                        <input type="checkbox" name="verified_only" value="1" {% if request.GET.verified_only %}checked{% endif %} class="rounded text-brand-indigo">
+                        <span>✓ Verified Sellers Only</span>
+                    </label>
+                    <label class="flex items-center gap-2 text-neutral-700">
+                        <input type="checkbox" name="in_stock_only" value="1" {% if request.GET.in_stock_only != '0' %}checked{% endif %} class="rounded text-brand-green">
+                        <span>In Stock Only</span>
+                    </label>
+                    <label class="flex items-center gap-2 text-neutral-700">
+                        <input type="checkbox" name="trusted_only" value="1" class="rounded">
+                        <span>★ Trusted Seller (4.2★ + 50 sales)</span>
+                    </label>
+                </div>
+
+                <button type="submit" class="w-full bg-brand-green text-white font-display font-semibold py-2.5 rounded-stall text-sm shadow hover:brightness-110">
+                    Apply Advanced Filters
+                </button>
+                <p class="text-[10px] text-neutral-500 text-center">Relevance sorting • 60s cached • lazy images</p>
+            </form>
+        </div>
+
+        <!-- Search Results Grid Area -->
+        <div id="search-results-grid" class="lg:col-span-3 space-y-5">
+            <!-- Sorting Header — relevance-based -->
+            <div class="flex flex-wrap justify-between items-center bg-white px-4 py-3 rounded-stall border border-neutral-200 text-sm gap-2">
+                <div class="text-neutral-700">
+                    {% if total_count %}
+                    <span class="font-bold text-surface-ink">{{ total_count }}</span> results
+                    {% if query %}for "{{ query }}"{% endif %}
+                    • Page {{ page|default:1 }}
+                    {% else %}
+                    <span class="text-state-warning font-semibold">0 results</span> — showing smart suggestions
+                    {% endif %}
+                </div>
+                <form method="get" class="flex items-center gap-2">
+                    <input type="hidden" name="q" value="{{ query }}">
+                    {% for key,val in request.GET.items %}{% if key != 'sort' and key != 'q' %}<input type="hidden" name="{{ key }}" value="{{ val }}">{% endif %}{% endfor %}
+                    <label class="text-xs text-neutral-600">Sort:</label>
+                    <select name="sort" onchange="this.form.submit()" class="bg-surface-base border border-neutral-300 rounded-stall px-2.5 py-1.5 text-xs font-medium">
+                        <option value="relevance" {% if request.GET.sort == 'relevance' or not request.GET.sort %}selected{% endif %}>★ Relevance (smart)</option>
+                        <option value="trust" {% if request.GET.sort == 'trust' %}selected{% endif %}>Trust Score</option>
+                        <option value="rating" {% if request.GET.sort == 'rating' %}selected{% endif %}>Seller Rating</option>
+                        <option value="popular" {% if request.GET.sort == 'popular' %}selected{% endif %}>Best Selling</option>
+                        <option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>Newest</option>
+                        <option value="price_low" {% if request.GET.sort == 'price_low' %}selected{% endif %}>Price ↑</option>
+                        <option value="price_high" {% if request.GET.sort == 'price_high' %}selected{% endif %}>Price ↓</option>
+                    </select>
+                </form>
+            </div>
+
+            {% if results %}
+            <!-- Results Cards — lazy loaded images, efficient queries -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                {% for product in results %}
+                <div class="bg-white rounded-stall border border-neutral-200 overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition">
+                    <div class="relative">
+                        {% with img=product.images.first %}
+                        {% if img %}
+                        <img src="{{ img.image.url }}" alt="{{ product.name }}" loading="lazy"
+                             class="w-full h-40 object-cover bg-surface-base">
+                        {% else %}
+                        <div class="w-full h-40 bg-surface-base flex items-center justify-center text-3xl">🛍️</div>
+                        {% endif %}
+                        {% endwith %}
+                        <!-- badges -->
+                        <div class="absolute top-2 left-2 flex flex-col gap-1">
+                            {% if product.vendor.is_verified %}
+                            <span class="bg-brand-indigo text-white text-[10px] px-2 py-0.5 stall-flag font-bold shadow">✓ Verified</span>
+                            {% endif %}
+                            {% if product.vendor.is_trusted_seller %}
+                            <span class="bg-state-success text-white text-[9px] px-2 py-0.5 rounded-full shadow">★ Trusted</span>
+                            {% endif %}
+                        </div>
+                        <span class="absolute top-2 right-2 bg-white/90 text-[10px] px-2 py-0.5 rounded-full border text-neutral-700">Ward {{ product.vendor.shop_ward_number }}</span>
+                    </div>
+                    <div class="p-4 space-y-2 flex-grow">
+                        <div class="flex justify-between items-start gap-2">
+                            <span class="bg-brand-marigold/20 text-surface-ink text-[10px] font-bold px-2 py-0.5 rounded">{{ product.category.name }}</span>
+                            <span class="text-[11px] text-brand-marigold font-bold">{{ product.vendor.average_rating|floatformat:1 }}★</span>
+                        </div>
+                        <h4 class="font-display font-bold text-[15px] text-surface-ink leading-tight line-clamp-2">{{ product.name }}</h4>
+                        <p class="text-xs text-neutral-500">
+                            <a href="{% url 'catalog:vendor_storefront' slug=product.vendor.shop_slug %}" class="text-brand-indigo hover:underline">{{ product.vendor.shop_name }}</a>
+                            • {{ product.vendor.total_sales }} sold
+                        </p>
+                        <!-- Transparent pricing mini -->
+                        <div class="flex items-baseline gap-2">
+                            <div class="font-display font-bold text-lg text-brand-green tabular-nums">NPR {{ product.effective_price|floatformat:0 }}</div>
+                            {% if product.discounted_price %}
+                            <div class="text-xs line-through text-neutral-400">NPR {{ product.price }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="text-[10px] text-neutral-500">
+                            Total payable ~ NPR {{ product.pricing_breakdown.total_payable|floatformat:0 }} incl. VAT + delivery
+                        </div>
+                    </div>
+                    <div class="p-3 pt-0 flex justify-between items-center border-t border-neutral-100 mt-1 text-xs">
+                        <span class="text-state-success">✓ In Stock • {{ product.vendor.location_display }}</span>
+                        <a href="{% url 'catalog:product_detail' slug=product.slug %}" class="bg-brand-green text-white px-3 py-1.5 rounded-stall font-display font-bold hover:brightness-110">View</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if total_pages > 1 %}
+            <div class="flex justify-center gap-2 pt-2">
+                {% if page > 1 %}
+                <a href="?q={{ query }}&page={{ page|add:"-1" }}&sort={{ request.GET.sort }}" class="px-3 py-1.5 border rounded-stall bg-white text-sm">← Prev</a>
+                {% endif %}
+                <span class="px-3 py-1.5 text-sm text-neutral-600">Page {{ page }} / {{ total_pages }}</span>
+                {% if page < total_pages %}
+                <a href="?q={{ query }}&page={{ page|add:"1" }}&sort={{ request.GET.sort }}" class="px-3 py-1.5 border rounded-stall bg-white text-sm">Next →</a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% else %}
+            <!-- Zero-result helpful suggestions — Search & Discovery improvement -->
+            <div class="bg-white p-8 rounded-stall border border-neutral-200 text-center space-y-5">
+                <div class="text-5xl">🔍</div>
+                <div>
+                    <h3 class="font-display font-bold text-xl text-brand-green">No Exact Matches Found in Hetauda</h3>
+                    <p class="text-sm text-neutral-600 max-w-xl mx-auto mt-1">
+                        {{ suggestions.message|default:"We couldn't find stalls matching your exact filter. Try our smart suggestions below." }}
+                    </p>
+                </div>
+
+                {% if suggestions.did_you_mean %}
+                <div class="bg-surface-base border rounded-stall p-3 max-w-lg mx-auto text-left">
+                    <div class="font-display font-bold text-sm text-brand-indigo mb-1">Did you mean?</div>
+                    <div class="flex flex-wrap gap-2 text-xs">
+                        {% for s in suggestions.did_you_mean %}
+                        <a href="?q={{ s|urlencode }}" class="bg-white border px-3 py-1 rounded-full hover:border-brand-green">{{ s }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if suggestions.relax_filters %}
+                <div class="text-xs text-neutral-700">
+                    <strong>Try:</strong>
+                    {{ suggestions.relax_filters|join:" • " }}
+                </div>
+                {% endif %}
+
+                <!-- Trending products -->
+                {% if suggestions.trending_products %}
+                <div class="text-left max-w-2xl mx-auto">
+                    <div class="font-display font-bold text-sm mb-2 text-center">🔥 Trending in Hetauda right now</div>
+                    <div class="grid sm:grid-cols-2 gap-2 text-xs">
+                        {% for tp in suggestions.trending_products %}
+                        <a href="{% url 'catalog:product_detail' slug=tp.slug %}" class="bg-surface-base border rounded-stall p-2 hover:border-brand-green flex justify-between">
+                            <span>{{ tp.name|truncatechars:32 }}</span>
+                            <span class="font-bold text-brand-green tabular-nums">NPR {{ tp.price|floatformat:0 }}</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Popular searches + categories -->
+                <div class="grid sm:grid-cols-2 gap-4 max-w-2xl mx-auto text-left text-xs pt-2">
+                    <div class="bg-surface-base p-3 rounded-stall border">
+                        <div class="font-bold mb-2">Popular searches</div>
+                        <div class="flex flex-wrap gap-1.5">
+                            {% for pop in suggestions.popular_searches %}
+                            <a href="?q={{ pop }}" class="bg-white border px-2 py-1 rounded-full hover:bg-brand-marigold/20">{{ pop }}</a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="bg-surface-base p-3 rounded-stall border">
+                        <div class="font-bold mb-2">Browse categories</div>
+                        <div class="flex flex-wrap gap-1.5">
+                            {% for cat in suggestions.categories %}
+                            <a href="{% url 'catalog:category_detail' slug=cat.slug %}" class="bg-white border px-2 py-1 rounded hover:bg-brand-green hover:text-white">{{ cat.name }}</a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-2 flex justify-center gap-3 flex-wrap">
+                    <a href="{% url 'catalog:category_list' %}" class="bg-brand-green text-white font-display font-semibold px-5 py-2 rounded-stall text-sm">Browse All Categories</a>
+                    <a href="{% url 'support:complaint_form' %}" class="border border-brand-marigold text-surface-ink font-display font-semibold px-5 py-2 rounded-stall text-sm">Request Item From Local Shop</a>
+                    <button onclick="document.querySelector('#advanced-search-form').reset(); document.querySelector('#advanced-search-form').submit()" class="text-xs underline text-brand-indigo">Clear all filters → show all verified products</button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

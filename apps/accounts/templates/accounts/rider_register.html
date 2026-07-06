@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Join Delivery Fleet — Makwanpur Mart [Phase 2]{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white p-8 rounded-stall border border-neutral-200 shadow-sm my-6 space-y-6">
+    <div class="border-b pb-4">
+        <span class="inline-block bg-brand-indigo text-white font-display font-bold text-xs px-3 py-1 stall-flag mb-2">Phase 2 Recruitment</span>
+        <h1 class="font-display font-bold text-3xl text-brand-green">Join Hetauda's Rider Fleet</h1>
+        <p class="text-xs text-neutral-500 mt-1">Paid per drop. Work locally across Hetauda Wards 1-19.</p>
+    </div>
+    <form action="{% url 'accounts:rider_dashboard' %}" method="post" class="space-y-4 text-sm">
+        <div>
+            <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Vehicle Type *</label>
+            <select class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2">
+                <option>Motorbike / Scooter</option>
+                <option>Electric Scooter (EV)</option>
+                <option>Bicycle (Wards 1-5 Only)</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Driving License Number *</label>
+            <input type="text" placeholder="06-01-XXXXXXXX" required class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2">
+        </div>
+        <button type="submit" class="w-full bg-brand-green text-white font-display font-bold py-3 rounded-stall shadow">Submit Rider Application</button>
+    </form>
+</div>
+{% endblock %}

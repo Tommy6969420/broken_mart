@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Register Vendor Storefront — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto bg-white p-8 rounded-stall border border-neutral-200 shadow-sm my-6 space-y-8">
+    <div class="border-b pb-6">
+        <span class="inline-block bg-brand-marigold text-surface-ink font-display font-bold text-xs px-3 py-1 stall-flag uppercase mb-2">Partner Onboarding</span>
+        <h1 class="font-display font-bold text-3xl text-brand-green">Open Your Local Storefront in Hetauda</h1>
+        <p class="text-sm text-neutral-600 mt-1">Reach thousands of neighborhood shoppers. <strong>FREE Listing for Year 1</strong> &bull; Only 5% commission on sales.</p>
+    </div>
+
+    <!-- Transparent Financial Terms Notice -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-surface-base rounded-stall border border-neutral-300 text-center text-xs">
+        <div>
+            <strong class="block text-brand-green font-display text-base">Year 1 FREE</strong>
+            <span>No subscription fee for your first 12 months</span>
+        </div>
+        <div>
+            <strong class="block text-brand-green font-display text-base">5% Commission</strong>
+            <span>Deducted only upon verified successful order completion</span>
+        </div>
+        <div>
+            <strong class="block text-brand-green font-display text-base">Cottage Exempt</strong>
+            <span>Sell legally under our DOCSCP platform license</span>
+        </div>
+    </div>
+
+    <form action="{% url 'accounts:vendor_status' %}" method="post" class="space-y-6">
+        <div class="space-y-4">
+            <h3 class="font-display font-bold text-lg text-brand-green border-b pb-2">1. Shop &amp; Category Details</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Shop / Store Name *</label>
+                    <input type="text" placeholder="Shrestha Cloth Store" required class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Primary Category *</label>
+                    <select required class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2 text-sm">
+                        <option value="fashion">Fashion &amp; Clothing [Phase 1]</option>
+                        <option value="beauty">Beauty &amp; Cosmetics [Phase 1]</option>
+                        <option value="food">Local Food &amp; Snacks [Phase 2 - Requires Hygiene SLA]</option>
+                        <option value="handicrafts">Local Handicrafts</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Store Description *</label>
+                <textarea rows="3" placeholder="Tell Hetauda shoppers what makes your stall special..." required class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2 text-sm"></textarea>
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            <h3 class="font-display font-bold text-lg text-brand-green border-b pb-2">2. Legal &amp; Location Credentials</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Hetauda Ward Number *</label>
+                    <select required class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2 text-sm">
+                        <option value="4">Ward 4 (Main Bazaar)</option>
+                        <option value="2">Ward 2</option>
+                        <option value="10">Ward 10</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">PAN / VAT Registration Number *</label>
+                    <input type="text" placeholder="30XXXXXXX" required class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2 text-sm tabular-nums">
+                </div>
+            </div>
+        </div>
+
+        <!-- Non-negotiable Vendor Agreement Checkbox linked to actual text -->
+        <div class="p-5 bg-state-warning/10 border-2 border-state-warning/40 rounded-stall space-y-3">
+            <label class="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" required class="mt-1 rounded text-brand-green w-5 h-5">
+                <span class="text-sm text-neutral-800 leading-relaxed">
+                    I explicitly acknowledge and accept the <a href="{% url 'accounts:vendor_agreement' %}" target="_blank" class="font-bold text-brand-indigo underline">Makwanpur Mart Vendor Legal Agreement</a>. I understand that as a vendor, I am legally responsible for product quality, accepting valid returns within stated policies, and issuing statutory bills under the Electronic Commerce Act 2081.
+                </span>
+            </label>
+        </div>
+
+        <button type="submit" class="w-full bg-brand-green text-white font-display font-bold text-lg py-3.5 rounded-stall hover:brightness-110 transition shadow-lg">
+            Submit Application for Founder Doorstep Verification
+        </button>
+    </form>
+</div>
+{% endblock %}

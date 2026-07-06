@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Stall Not Found (404) — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-xl mx-auto text-center py-16 px-4 bg-white rounded-stall border border-neutral-200 shadow-sm my-8">
+    <div class="text-6xl mb-4">🏮</div>
+    <h1 class="font-display font-bold text-3xl text-brand-green mb-2">This Bazaar Stall Has Moved (404)</h1>
+    <p class="text-neutral-600 mb-6 leading-relaxed">
+        We couldn't find the page or shop you're looking for in Hetauda. It may have been relocated, or the URL might be incorrect. Don't worry—you're never dead-ended in our local bazaar.
+    </p>
+    
+    <div class="mb-8 max-w-md mx-auto">
+        <form action="{% url 'core:search_results' %}" method="get" class="flex gap-2">
+            <input type="text" name="q" placeholder="Search Hetauda shops or items..." class="flex-grow bg-surface-base border border-neutral-300 rounded-stall px-3 py-2 text-sm">
+            <button type="submit" class="bg-brand-green text-white font-display font-medium px-4 py-2 rounded-stall text-sm">Search</button>
+        </form>
+    </div>
+
+    <div class="flex justify-center gap-4">
+        <a href="{% url 'core:home' %}" class="bg-brand-green text-white font-display font-semibold px-6 py-2.5 rounded-stall hover:brightness-110 transition shadow">
+            Return to Bazaar Home
+        </a>
+        <a href="{% url 'support:help_center' %}" class="border border-brand-green text-brand-green font-display font-semibold px-6 py-2.5 rounded-stall hover:bg-brand-green/5 transition">
+            Visit Help Center
+        </a>
+    </div>
+</div>
+{% endblock %}

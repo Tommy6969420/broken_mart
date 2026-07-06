@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Edit Profile — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-xl mx-auto bg-white p-8 rounded-stall border border-neutral-200 shadow-sm my-6 space-y-6">
+    <div class="flex justify-between items-center border-b pb-4">
+        <h1 class="font-display font-bold text-2xl text-brand-green">Edit Personal Information</h1>
+        <a href="{% url 'accounts:change_password' %}" class="text-xs font-bold text-brand-indigo hover:underline">Change Password</a>
+    </div>
+
+    <form action="{% url 'accounts:profile' %}" method="post" class="space-y-4">
+        <div>
+            <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Full Name *</label>
+            <input type="text" value="Ram Shrestha" required class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2 text-sm">
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Mobile Phone Number (Primary ID) *</label>
+            <input type="tel" value="9845123456" disabled class="w-full bg-neutral-200 border border-neutral-300 rounded-stall px-3 py-2 text-sm text-neutral-600 cursor-not-allowed tabular-nums">
+            <span class="text-[11px] text-neutral-500">Phone numbers cannot be changed directly without OTP reverification.</span>
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Email Address (Optional)</label>
+            <input type="email" value="ram.shrestha@gmail.com" placeholder="ram@example.com" class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2 text-sm">
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Preferred Display Language</label>
+            <select class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2 text-sm">
+                <option value="en" selected>English (EN)</option>
+                <option value="ne">नेपाली (Devanagari Script)</option>
+            </select>
+        </div>
+        <div class="pt-2 flex justify-end gap-3">
+            <a href="{% url 'accounts:profile' %}" class="px-5 py-2 border border-neutral-300 rounded-stall text-sm font-semibold">Cancel</a>
+            <button type="submit" class="bg-brand-green text-white font-display font-bold px-6 py-2 rounded-stall hover:brightness-110 transition shadow">Save Changes</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

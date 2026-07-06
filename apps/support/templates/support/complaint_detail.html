@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Dispute #GR-104 Resolution — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto bg-white p-8 rounded-stall border shadow-sm my-6 space-y-6">
+    <div class="border-b pb-4 flex justify-between items-center">
+        <h1 class="font-display font-bold text-2xl text-brand-green">Dispute Record #GR-104</h1>
+        <span class="bg-state-success text-white font-bold text-xs px-3 py-1 rounded">Resolved</span>
+    </div>
+
+    <!-- NON-NEGOTIABLE ELEMENT: COMPLAINT RESOLUTION NOTES VISIBLE TO FILER -->
+    <div class="p-6 bg-state-success/10 border-2 border-state-success rounded-stall space-y-2">
+        <strong class="block font-display text-lg text-state-success">Platform Mediator Resolution Notes (July 03, 2026):</strong>
+        <p class="text-sm text-neutral-800 leading-relaxed">
+            Our Hetauda mediator contacted vendor Shrestha Cloth Store directly regarding the damaged dupatta stitching. The vendor acknowledged the defect and our delivery rider Bikash Thapa successfully picked up the returned item and delivered an inspected replacement set to Ward #4. Dispute officially closed to customer satisfaction.
+        </p>
+    </div>
+</div>
+{% endblock %}

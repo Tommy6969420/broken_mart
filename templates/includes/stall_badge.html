@@ -1,0 +1,59 @@
+{% comment %}
+Signature stall-flag notch tag — now supports dynamic verified seller badge.
+Marketplace Improvement: Trust & Transparency
+
+Usage generic:
+  {% include "includes/stall_badge.html" with label="Fashion" bg_color="bg-brand-marigold" %}
+
+Usage vendor:
+  {% include "includes/stall_badge.html" with vendor=product.vendor %}
+{% endcomment %}
+
+{% if vendor %}
+<!-- Dynamic Verified Seller Badge — checks DB verification_status -->
+<div class="flex items-center justify-between p-3 bg-surface-base rounded-stall border border-neutral-300" role="region" aria-label="Seller trust information">
+  <div class="flex-grow">
+    <span class="text-[11px] uppercase tracking-wider text-neutral-500 block">
+      Sold & shipped by
+      {% if vendor.is_verified %}Verified Vendor{% else %}Marketplace Seller{% endif %}:
+    </span>
+    <a href="{% url 'catalog:vendor_storefront' slug=vendor.shop_slug %}" class="font-display font-bold text-base text-brand-indigo hover:underline flex items-center gap-1.5 flex-wrap">
+      <span>{{ vendor.shop_name }}</span>
+      {% if vendor.is_verified %}
+        <!-- Dynamic verified badge — only shown if vendor.verification_status == 'verified' -->
+        <span class="bg-brand-indigo text-white text-[10px] px-2 py-0.5 stall-flag flex items-center gap-1" title="Verified {{ vendor.verified_at|date:'Y-m-d'|default:'recently' }} • Trust {{ vendor.trust_score }}/100">
+          ✓ Verified Vendor
+        </span>
+        {% if vendor.is_trusted_seller %}
+        <span class="bg-state-success text-white text-[10px] px-2 py-0.5 rounded-full">★ Trusted</span>
+        {% endif %}
+      {% else %}
+        <span class="bg-neutral-300 text-neutral-700 text-[10px] px-2 py-0.5 rounded-full" title="Verification pending — shop carefully">⏳ Pending Verification</span>
+      {% endif %}
+    </a>
+    <!-- Seller Ratings / Reviews inline -->
+    <div class="flex items-center gap-2 mt-1 text-[11px] text-neutral-600">
+      <span class="text-brand-marigold font-bold">
+        {{ vendor.average_rating|floatformat:1 }}★
+      </span>
+      <span>• {{ vendor.total_reviews_count }} reviews</span>
+      <span>• {{ vendor.total_sales }} sales</span>
+      {% if vendor.trust_score %}
+      <span class="text-state-info font-semibold">• Trust {{ vendor.trust_score }}/100</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="text-right text-xs text-neutral-600 shrink-0 ml-3">
+    <strong>{{ vendor.location_display|default:"Hetauda" }}</strong><br>
+    {{ vendor.shop_landmark|default:"Main Bazaar Road" }}
+    <div class="mt-1">
+      <a href="{% url 'catalog:vendor_storefront' slug=vendor.shop_slug %}" class="text-brand-indigo hover:underline font-medium text-[11px]">Visit storefront →</a>
+    </div>
+  </div>
+</div>
+{% else %}
+<!-- Fallback generic stall badge -->
+<span class="inline-block {{ bg_color|default:'bg-brand-marigold' }} {{ text_color|default:'text-surface-ink' }} text-small font-medium px-3 py-1 stall-flag shadow-sm" aria-label="{{ label }}">
+    {{ label }}
+</span>
+{% endif %}

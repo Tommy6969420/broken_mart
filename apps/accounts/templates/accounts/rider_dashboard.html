@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Rider Dispatch Dashboard — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="space-y-6" x-data="{ online: {{ rider.is_available|yesno:'true,false' }} }">
+    <!-- Header — with KYC status -->
+    <div class="bg-brand-green text-white p-6 rounded-stall shadow-md">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h1 class="font-display font-bold text-2xl flex items-center gap-2">
+                    {{ request.user.get_full_name|default:request.user.username }}
+                    <span class="text-sm">({{ rider.get_vehicle_type_display }})</span>
+                    {% if rider.is_kyc_verified %}
+                    <span class="bg-state-success text-white text-[10px] px-2 py-0.5 rounded-full font-bold">✓ KYC Verified</span>
+                    {% else %}
+                    <span class="bg-state-warning text-white text-[10px] px-2 py-0.5 rounded-full font-bold">⏳ {{ rider.get_kyc_status_display }}</span>
+                    {% endif %}
+                </h1>
+                <p class="text-xs text-neutral-300 mt-1">
+                    Total deliveries: <strong class="text-brand-marigold tabular-nums">{{ stats.total_deliveries }}</strong>
+                    • Rating: <strong class="text-brand-marigold">{{ stats.rating|floatformat:1 }}★</strong>
+                    • Zone: <strong>{{ stats.current_zone }}</strong>
+                </p>
+            </div>
+            <!-- Online toggle — disabled if not KYC verified -->
+            <div class="text-right space-y-1">
+                <button @click="online = !online" :disabled="{{ rider.can_accept_deliveries|yesno:'false,true' }}"
+                        :class="online && {{ rider.can_accept_deliveries|yesno:'true,false' }} ? 'bg-state-success text-white' : 'bg-neutral-600 text-neutral-300'"
+                        class="px-5 py-2.5 rounded-stall font-display font-bold text-sm shadow transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span x-text="online ? '🟢 ACTIVE ONLINE' : '🔴 OFFLINE'"></span>
+                </button>
+                {% if not rider.can_accept_deliveries %}
+                <div class="text-[10px] text-state-warning font-bold">KYC required to go online</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- KYC Gate Banner -->
+    {% if kyc_blocked %}
+    <div class="bg-state-warning/10 border-2 border-brand-marigold rounded-stall p-5 space-y-3">
+        <h3 class="font-display font-bold text-lg text-state-warning">🔒 KYC Verification Required</h3>
+        <p class="text-sm text-neutral-800">
+            Nepal E-Commerce Act 2081 — delivery riders must complete KYC before accepting tasks.<br>
+            Current status: <strong>{{ rider.get_kyc_status_display }}</strong>
+        </p>
+        <div class="grid sm:grid-cols-5 gap-2 text-[11px]">
+            <div class="bg-white border rounded p-2 text-center {% if kyc_docs.citizenship_front %}border-state-success text-state-success{% endif %}">
+                {% if kyc_docs.citizenship_front %}✓{% else %}○{% endif %} Citizenship Front
+            </div>
+            <div class="bg-white border rounded p-2 text-center {% if kyc_docs.citizenship_back %}border-state-success text-state-success{% endif %}">
+                {% if kyc_docs.citizenship_back %}✓{% else %}○{% endif %} Citizenship Back
+            </div>
+            <div class="bg-white border rounded p-2 text-center {% if kyc_docs.license %}border-state-success text-state-success{% endif %}">
+                {% if kyc_docs.license %}✓{% else %}○{% endif %} License
+            </div>
+            <div class="bg-white border rounded p-2 text-center {% if kyc_docs.bluebook %}border-state-success text-state-success{% endif %}">
+                {% if kyc_docs.bluebook %}✓{% else %}○{% endif %} Bluebook
+            </div>
+            <div class="bg-white border rounded p-2 text-center {% if kyc_docs.selfie %}border-state-success text-state-success{% endif %}">
+                {% if kyc_docs.selfie %}✓{% else %}○{% endif %} Selfie + ID
+            </div>
+        </div>
+        <div class="w-full bg-neutral-200 rounded-full h-2">
+            <div class="bg-brand-green h-2 rounded-full" style="width: {{ kyc_progress }}%"></div>
+        </div>
+        <p class="text-[11px] text-neutral-700">KYC Progress: {{ kyc_progress }}% — upload missing documents below</p>
+        <a href="{% url 'accounts:rider_profile_edit' %}" class="inline-block bg-brand-indigo text-white font-display font-bold px-5 py-2 rounded-stall text-sm">
+            {% if kyc_form_needed %}Upload KYC Documents →{% else %}View KYC Status →{% endif %}
+        </a>
+        {% if rider.kyc_rejection_reason %}
+        <div class="bg-state-error/10 border border-state-error text-state-error p-2 rounded text-xs">
+            <strong>Rejection reason:</strong> {{ rider.kyc_rejection_reason }}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Map — Makwanpur delivery zones -->
+    <div class="bg-white p-4 rounded-stall border shadow-sm">
+        <h3 class="font-display font-bold text-brand-green mb-2">📍 Makwanpur Delivery Map — Live Pinpointing</h3>
+        {% include "includes/makwanpur_map.html" with lat=27.4287 lon=85.0320 zoom=12 height="300px" map_id="riderdash" %}
+        <p class="text-[11px] text-neutral-600 mt-2">Blue pins = Hetauda wards • drag marker = share exact GPS with dispatch • restricted to Makwanpur district bounds • latitude/longitude saved to Delivery model</p>
+    </div>
+
+    <!-- Available Deliveries — KYC gated -->
+    <div class="bg-white p-6 rounded-stall border border-neutral-200 shadow-sm space-y-4">
+        <div class="flex justify-between items-center">
+            <h2 class="font-display font-bold text-xl text-brand-green">Available Deliveries — {{ rider.current_zone|default:"No zone set" }}</h2>
+            <span class="text-xs px-2 py-1 rounded-full {% if rider.can_accept_deliveries %}bg-state-success/10 text-state-success{% else %}bg-state-error/10 text-state-error{% endif %}">
+                {% if rider.can_accept_deliveries %}✓ Eligible to accept{% else %}✗ KYC required{% endif %}
+            </span>
+        </div>
+
+        {% if not rider.can_accept_deliveries %}
+        <div class="p-5 bg-surface-base rounded-stall border text-center text-sm text-neutral-600">
+            Complete KYC verification to see available delivery tasks.<br>
+            <a href="{% url 'accounts:rider_profile_edit' %}" class="text-brand-indigo underline font-bold">Upload KYC now →</a>
+        </div>
+        {% elif available_deliveries %}
+            {% for delivery in available_deliveries %}
+            <div class="p-5 bg-surface-base rounded-stall border-2 border-brand-marigold/50 space-y-3">
+                <div class="flex justify-between items-start text-xs">
+                    <span class="bg-brand-marigold text-surface-ink font-bold px-2.5 py-0.5 stall-flag">Order #{{ delivery.order.order_number }}</span>
+                    <span class="font-bold text-state-warning">Ready for Pickup</span>
+                </div>
+                <div class="grid md:grid-cols-2 gap-3 text-sm">
+                    <div class="p-3 bg-white rounded-stall border">
+                        <strong class="text-brand-indigo block text-xs uppercase">Pickup Vendor</strong>
+                        <span class="font-display font-bold">{{ delivery.pickup_address|default:"Vendor Store" }}</span>
+                        <p class="text-xs text-neutral-600">Check order detail for exact address + GPS</p>
+                    </div>
+                    <div class="p-3 bg-white rounded-stall border">
+                        <strong class="text-brand-green block text-xs uppercase">Drop Customer</strong>
+                        <span class="font-display font-bold">{{ delivery.order.customer.get_full_name|default:delivery.order.customer.email }}</span>
+                        <p class="text-xs text-neutral-600">
+                            {{ delivery.order.delivery_address.municipality }} Ward {{ delivery.order.delivery_address.ward_number }}
+                            {% if delivery.order.delivery_address.latitude %}
+                            • GPS: {{ delivery.order.delivery_address.latitude }}, {{ delivery.order.delivery_address.longitude }}
+                            {% endif %}
+                            <br>Landmark: {{ delivery.order.delivery_address.landmark|truncatechars:60 }}
+                        </p>
+                        <a href="tel:{{ delivery.order.customer.phone_number }}" class="inline-block mt-1 bg-brand-green text-white px-3 py-1 rounded text-xs font-bold">📞 Call Customer</a>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center text-xs pt-2 border-t">
+                    <span>Payout: <strong class="tabular-nums text-brand-green">NPR {{ delivery.fee|default:"80" }}</strong> • Est. {{ delivery.estimated_time|default:"25" }} min</span>
+                    <a href="{% url 'delivery:delivery_detail' delivery_id=delivery.id %}" class="bg-brand-green text-white font-display font-bold px-5 py-2 rounded-stall text-sm shadow">Accept & Start →</a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="p-5 bg-surface-base rounded-stall border text-center text-sm text-neutral-600">
+                No unassigned deliveries in your zone right now.<br>
+                <span class="text-[11px]">Stay online — Hetauda 2-4hr SLA means new drops frequently.</span>
+            </div>
+        {% endif %}
+
+        <!-- My recent deliveries -->
+        {% if my_deliveries %}
+        <div class="border-t pt-4">
+            <h3 class="font-display font-bold text-base mb-2">My Recent Deliveries</h3>
+            <div class="space-y-2 text-xs">
+                {% for d in my_deliveries %}
+                <div class="flex justify-between bg-surface-base p-2 rounded border">
+                    <span>Order #{{ d.order.order_number }} — {{ d.status }}</span>
+                    <span class="tabular-nums">{{ d.assigned_at|date:"M j H:i" }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

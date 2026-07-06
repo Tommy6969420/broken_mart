@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Order Confirmed — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto bg-white p-8 rounded-stall border border-neutral-200 shadow-sm my-6 space-y-8 text-center">
+    <div class="w-20 h-20 bg-state-success/20 text-state-success rounded-full flex items-center justify-center text-4xl mx-auto">
+        ✓
+    </div>
+    <div>
+        <span class="bg-state-success text-white font-display font-bold text-xs px-3 py-1 rounded-full uppercase">Order Confirmed</span>
+        <h1 class="font-display font-bold text-3xl text-brand-green mt-2">Thank You, Ram! Order Placed Successfully.</h1>
+        <p class="text-sm text-neutral-600 mt-1">Human-Readable Reference Number: <strong class="text-surface-ink font-display text-lg tabular-nums">#MM-2026-8492</strong></p>
+    </div>
+
+    <!-- Immediate Next Steps SMS Notice -->
+    <div class="p-5 bg-surface-base rounded-stall border-2 border-brand-marigold text-left text-xs sm:text-sm space-y-2">
+        <strong class="block font-display text-brand-green text-base">Immediate Next Steps Timeline:</strong>
+        <p class="text-neutral-700 leading-relaxed">
+            1. You will receive an SMS via Sparrow SMS as soon as <strong>Shrestha Cloth Store</strong> confirms your item packaging.<br>
+            2. Your local rider will pick up your package and deliver it to Ward #4 within <strong>2 to 4 hours today</strong>.
+        </p>
+    </div>
+
+    <div class="flex justify-center gap-4 pt-4">
+        <a href="{% url 'orders:order_detail' order_id=8492 %}" class="bg-brand-green text-white font-display font-bold px-8 py-3 rounded-stall shadow-md hover:brightness-110 transition">
+            View Live Status Timeline &amp; Timestamps
+        </a>
+        <a href="{% url 'core:home' %}" class="border border-neutral-300 text-surface-ink font-display font-bold px-6 py-3 rounded-stall">
+            Continue Shopping
+        </a>
+    </div>
+</div>
+{% endblock %}

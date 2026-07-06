@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Vendor Dashboard — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <!-- Header Banner -->
+    <div class="bg-brand-green text-white p-6 rounded-stall shadow-md flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+        <div>
+            <div class="flex items-center gap-2">
+                <h1 class="font-display font-bold text-2xl">Shrestha Cloth Store (Ward 4)</h1>
+                <span class="bg-brand-indigo text-white text-xs font-bold px-2.5 py-0.5 stall-flag">Verified Stall</span>
+            </div>
+            <p class="text-xs text-neutral-300 mt-1">Vendor Operations Panel &bull; Year 1 Free Listing Active</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="{% url 'catalog:vendor_product_form' %}" class="bg-brand-marigold text-surface-ink font-display font-bold px-4 py-2 rounded-stall text-sm shadow hover:brightness-105">
+                + Add New Product
+            </a>
+            <a href="{% url 'catalog:vendor_storefront' slug='new-shrestha-cloth-store' %}" class="bg-white/10 text-white border border-white/30 font-display font-semibold px-4 py-2 rounded-stall text-sm">
+                View Live Storefront
+            </a>
+        </div>
+    </div>
+
+    <!-- Actionable Metrics Feed -->
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <!-- Actionable Pending Orders Count -->
+        <a href="{% url 'orders:vendor_order_list' %}?status=pending" class="bg-white p-5 rounded-stall border-2 border-state-warning shadow-sm space-y-1 hover:bg-state-warning/5 transition">
+            <span class="text-xs font-bold text-state-warning uppercase tracking-wider">Unconfirmed Orders</span>
+            <div class="font-display font-bold text-3xl text-surface-ink tabular-nums">3</div>
+            <span class="text-[11px] text-state-warning font-semibold">⚠️ Requires immediate confirmation!</span>
+        </a>
+
+        <!-- Preparing Orders -->
+        <a href="{% url 'orders:vendor_order_list' %}?status=preparing" class="bg-white p-5 rounded-stall border border-neutral-200 shadow-sm space-y-1">
+            <span class="text-xs font-bold text-neutral-500 uppercase tracking-wider">Preparing for Rider</span>
+            <div class="font-display font-bold text-3xl text-surface-ink tabular-nums">2</div>
+            <span class="text-[11px] text-neutral-400">Riders scheduled for pickup</span>
+        </a>
+
+        <!-- Low Stock Alerts -->
+        <a href="{% url 'catalog:vendor_product_list' %}?filter=low_stock" class="bg-white p-5 rounded-stall border border-neutral-200 shadow-sm space-y-1">
+            <span class="text-xs font-bold text-state-error uppercase tracking-wider">Low Stock Alerts</span>
+            <div class="font-display font-bold text-3xl text-state-error tabular-nums">4</div>
+            <span class="text-[11px] text-neutral-500">Items below 3 units remaining</span>
+        </a>
+
+        <!-- Gross Sales Summary -->
+        <a href="{% url 'orders:vendor_earnings' %}" class="bg-white p-5 rounded-stall border border-neutral-200 shadow-sm space-y-1">
+            <span class="text-xs font-bold text-neutral-500 uppercase tracking-wider">Sales (This Month)</span>
+            <div class="font-display font-bold text-2xl text-brand-green tabular-nums">NPR 42,500</div>
+            <span class="text-[11px] text-state-success font-medium">Net after 5% comm: NPR 40,375</span>
+        </a>
+    </div>
+
+    <!-- Quick Navigation Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Urgent Order Queue -->
+        <div class="bg-white p-6 rounded-stall border border-neutral-200 shadow-sm space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-display font-bold text-lg text-brand-green">Urgent Order Action Queue</h3>
+                <a href="{% url 'orders:vendor_order_list' %}" class="text-xs font-bold text-brand-indigo">View All Orders →</a>
+            </div>
+            <div class="space-y-3">
+                <div class="p-3 bg-state-warning/10 border border-state-warning/30 rounded-stall flex justify-between items-center text-sm">
+                    <div>
+                        <span class="font-display font-bold text-surface-ink">#MM-8495</span> &bull; <span class="text-xs text-neutral-600">NPR 1,850 (COD)</span>
+                        <div class="text-xs text-neutral-500">Ordered 15 mins ago by Ram (Ward 4)</div>
+                    </div>
+                    <a href="{% url 'orders:vendor_order_detail' order_id=8495 %}" class="bg-state-warning text-white font-display font-bold px-3 py-1.5 rounded-stall text-xs">Confirm Order</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Low Stock Inventory Feed -->
+        <div class="bg-white p-6 rounded-stall border border-neutral-200 shadow-sm space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-display font-bold text-lg text-brand-green">Low Stock Inventory Alerts</h3>
+                <a href="{% url 'catalog:vendor_product_list' %}" class="text-xs font-bold text-brand-indigo">Manage Products →</a>
+            </div>
+            <div class="space-y-3 text-sm">
+                <div class="flex justify-between items-center p-3 bg-surface-base rounded-stall border">
+                    <span>Palpali Dhaka Shawl (Red/Gold)</span>
+                    <span class="bg-state-error text-white text-xs font-bold px-2 py-0.5 rounded tabular-nums">2 Left</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

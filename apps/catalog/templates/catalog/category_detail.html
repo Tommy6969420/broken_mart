@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}{{ category.name }} — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <div class="bg-white p-6 rounded-stall border border-neutral-200 shadow-sm">
+        <nav class="text-xs text-neutral-500 mb-2">
+            {% for crumb in breadcrumb %}
+                <a href="{% url 'catalog:category_detail' slug=crumb.slug %}" class="hover:underline">{{ crumb.name }}</a>{% if not forloop.last %} / {% endif %}
+            {% endfor %}
+        </nav>
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+            <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <h1 class="font-display font-bold text-3xl text-brand-green">{{ category.name }}</h1>
+                    <span class="bg-brand-marigold text-surface-ink text-xs font-bold px-2.5 py-0.5 stall-flag">Live</span>
+                    {% if category.parent %}<span class="text-xs bg-surface-base border px-2 py-0.5 rounded-full">{{ category.parent.name }}</span>{% endif %}
+                </div>
+                <p class="text-sm text-neutral-600 mt-1">
+                    Showing {{ product_count|default:products.paginator.count }} items from verified Hetauda stalls
+                    • moderation approved only
+                </p>
+            </div>
+            <div class="flex gap-2 items-center text-xs">
+                <form method="get" class="flex gap-2">
+                    <select name="sort" onchange="this.form.submit()" class="bg-surface-base border border-neutral-300 rounded-stall px-3 py-1.5 font-semibold">
+                        <option value="newest">Newest</option>
+                        <option value="price_low">Price ↑</option>
+                        <option value="price_high">Price ↓</option>
+                        <option value="rating">Top Rated</option>
+                        <option value="trust">Trust Score</option>
+                    </select>
+                    <label class="flex items-center gap-1 bg-surface-base border rounded-stall px-2 py-1.5">
+                        <input type="checkbox" name="verified_only" value="1" {% if request.GET.verified_only %}checked{% endif %} onchange="this.form.submit()">
+                        <span class="font-semibold text-brand-indigo">Verified only</span>
+                    </label>
+                </form>
+            </div>
+        </div>
+
+        {% if categories %}
+        <div class="mt-4 pt-3 border-t flex flex-wrap gap-2 text-xs">
+            <span class="text-neutral-600 font-bold mr-1">Subcategories:</span>
+            {% for sub in categories %}
+            <a href="{% url 'catalog:category_detail' slug=sub.slug %}" class="bg-surface-base border px-3 py-1 rounded-full hover:border-brand-green">{{ sub.name }}</a>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Product Grid — DYNAMIC -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {% for product in products %}
+        <div class="bg-white rounded-stall border border-neutral-200 overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition">
+            <div class="relative">
+                {% with img=product.images.first %}
+                {% if img %}<img src="{{ img.image.url }}" alt="{{ product.name }}" loading="lazy" class="w-full h-44 object-cover bg-surface-base">{% else %}<div class="w-full h-44 bg-surface-base flex items-center justify-center text-3xl">🛍️</div>{% endif %}
+                {% endwith %}
+                {% if product.vendor.is_verified %}<span class="absolute top-2 left-2 bg-brand-indigo text-white text-[10px] px-2 py-0.5 stall-flag font-bold">✓ Verified</span>{% endif %}
+                <span class="absolute top-2 right-2 bg-white/90 text-[10px] px-2 py-0.5 rounded-full border">Ward {{ product.vendor.shop_ward_number }}</span>
+            </div>
+            <div class="p-4 space-y-2 flex-grow">
+                <div class="flex justify-between items-start text-xs gap-1">
+                    <a href="{% url 'catalog:vendor_storefront' slug=product.vendor.shop_slug %}" class="text-brand-indigo font-bold hover:underline truncate">{{ product.vendor.shop_name }}</a>
+                    <span class="text-brand-marigold font-bold shrink-0">{{ product.vendor.average_rating|floatformat:1 }}★</span>
+                </div>
+                <h3 class="font-display font-bold text-[15px] text-surface-ink line-clamp-2 h-10">{{ product.name }}</h3>
+                <div class="flex items-baseline gap-2">
+                    <span class="font-display font-bold text-lg text-brand-green tabular-nums">NPR {{ product.effective_price|floatformat:0 }}</span>
+                    {% if product.discounted_price %}<span class="text-xs line-through text-neutral-400">NPR {{ product.price|floatformat:0 }}</span>{% endif %}
+                </div>
+                <div class="text-[10px] text-neutral-500">Payable ~ NPR {{ product.pricing_breakdown.total_payable|floatformat:0 }} incl. VAT</div>
+            </div>
+            <div class="p-4 pt-2 border-t border-neutral-100 flex justify-between items-center text-xs">
+                <span class="{% if product.is_approved_and_live %}text-state-success{% else %}text-state-warning{% endif %}">
+                    {% if product.is_approved_and_live %}✓ In Stock{% else %}⏳ {{ product.get_moderation_status_display }}{% endif %}
+                </span>
+                <a href="{% url 'catalog:product_detail' slug=product.slug %}" class="bg-brand-green text-white px-3 py-1.5 rounded-stall font-display font-bold hover:brightness-110">View</a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-4 bg-white p-10 rounded-stall border text-center space-y-3">
+            <div class="text-4xl">📦</div>
+            <h3 class="font-display font-bold text-lg">No approved products in {{ category.name }} yet</h3>
+            <p class="text-sm text-neutral-600">Vendors: list your products — they go through auto-moderation then manual approval.</p>
+            <a href="{% url 'accounts:vendor_register' %}" class="bg-brand-indigo text-white px-4 py-2 rounded-stall text-xs font-bold">Open Vendor Storefront (Free Yr 1)</a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if products.has_other_pages %}
+    <div class="flex justify-center gap-2">
+        {% if products.has_previous %}<a href="?page={{ products.previous_page_number }}" class="px-3 py-1.5 bg-white border rounded-stall text-sm">← Prev</a>{% endif %}
+        <span class="px-3 py-1.5 text-sm text-neutral-600">Page {{ products.number }} / {{ products.paginator.num_pages }}</span>
+        {% if products.has_next %}<a href="?page={{ products.next_page_number }}" class="px-3 py-1.5 bg-white border rounded-stall text-sm">Next →</a>{% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Vendor Orders Queue — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <h1 class="font-display font-bold text-3xl text-brand-green">Stall Orders Fulfillment Queue</h1>
+    
+    <!-- Queue Tabs -->
+    <div class="flex gap-2 border-b pb-2 text-sm">
+        <a href="#" class="px-4 py-2 bg-state-warning text-white font-display font-bold rounded-stall shadow animate-pulse">
+            🔔 Unconfirmed New Orders (3)
+        </a>
+        <a href="#" class="px-4 py-2 bg-white border rounded-stall font-medium">Preparing (2)</a>
+        <a href="#" class="px-4 py-2 bg-white border rounded-stall font-medium">Completed</a>
+    </div>
+
+    <div class="bg-white p-6 rounded-stall border-2 border-state-warning shadow-sm space-y-4">
+        <div class="flex justify-between items-start">
+            <div>
+                <span class="bg-state-warning text-white text-xs font-bold px-2.5 py-0.5 rounded">NEW ORDER #MM-8495</span>
+                <h3 class="font-display font-bold text-lg text-surface-ink mt-1">1x Traditional Cotton Kurta Set (Size M)</h3>
+                <p class="text-xs text-neutral-600">Customer: Ram Shrestha (Ward #4) &bull; Payment: Cash on Delivery (NPR 1,850)</p>
+            </div>
+            <a href="{% url 'orders:vendor_order_detail' order_id=8495 %}" class="bg-brand-green text-white font-display font-bold px-5 py-2.5 rounded-stall text-sm shadow">
+                Open &amp; Confirm Order →
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

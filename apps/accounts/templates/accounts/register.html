@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Register Phone Number — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto bg-white p-8 rounded-stall border border-neutral-200 shadow-sm my-6 space-y-6">
+    <div class="text-center">
+        <span class="inline-block bg-brand-marigold text-surface-ink font-display font-bold text-xs px-3 py-1 stall-flag mb-2">Create Account</span>
+        <h1 class="font-display font-bold text-2xl text-brand-green">Join Hetauda's Marketplace</h1>
+        <p class="text-xs text-neutral-500 mt-1">We use your mobile phone number for instant OTP sign-in and rider dispatch.</p>
+    </div>
+
+    <form action="{% url 'accounts:verify_otp' %}" method="post" class="space-y-4">
+        <div>
+            <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Mobile Phone Number (Nepal) *</label>
+            <div class="flex">
+                <span class="inline-flex items-center px-3 bg-neutral-100 border border-r-0 border-neutral-300 rounded-l-stall text-sm font-semibold text-neutral-600">+977</span>
+                <input type="tel" name="phone" placeholder="98XXXXXXXX" maxlength="10" required
+                       class="flex-grow bg-surface-base border border-neutral-300 rounded-r-stall px-3 py-2 text-sm tabular-nums focus:bg-white">
+            </div>
+            <span class="text-[11px] text-neutral-400 mt-0.5 block">You will receive a 6-digit OTP code via Sparrow SMS.</span>
+        </div>
+
+        <div>
+            <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Full Name *</label>
+            <input type="text" name="full_name" placeholder="Sita Shrestha" required class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2 text-sm">
+        </div>
+
+        <div>
+            <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Password *</label>
+            <input type="password" name="password" placeholder="Create a secure password" required class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2 text-sm">
+            <!-- Inline Password Requirements -->
+            <div class="mt-2 p-2.5 bg-surface-base rounded-stall text-[11px] space-y-1 border border-neutral-200 text-neutral-600">
+                <strong class="block text-surface-ink">Password Must Contain:</strong>
+                <div class="flex items-center gap-1.5 text-state-success"><span>✓</span> At least 8 characters long</div>
+                <div class="flex items-center gap-1.5"><span>•</span> At least one numeric digit (0-9)</div>
+                <div class="flex items-center gap-1.5"><span>•</span> Not commonly used password</div>
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Preferred Language</label>
+            <select name="language" class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2 text-sm">
+                <option value="en">English (Default)</option>
+                <option value="ne">नेपाली (Devanagari Script)</option>
+            </select>
+        </div>
+
+        <button type="submit" class="w-full bg-brand-green text-white font-display font-bold py-3 rounded-stall hover:brightness-110 transition shadow">
+            Send OTP Verification Code
+        </button>
+    </form>
+
+    <div class="border-t pt-4 text-center space-y-2 text-xs">
+        <p>Already have a verified phone account? <a href="{% url 'accounts:login' %}" class="font-bold text-brand-indigo hover:underline">Log In Here</a></p>
+        <p>Forgot password? <a href="{% url 'accounts:password_reset' %}" class="text-neutral-500 underline">Reset via SMS OTP</a></p>
+    </div>
+</div>
+{% endblock %}

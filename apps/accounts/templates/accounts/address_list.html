@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Saved Addresses — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <div class="flex justify-between items-center bg-white p-6 rounded-stall border border-neutral-200 shadow-sm">
+        <div>
+            <h1 class="font-display font-bold text-2xl text-brand-green">Saved Delivery Addresses</h1>
+            <p class="text-xs text-neutral-500">Ward Number and Landmark are mandatory for Hetauda delivery accuracy.</p>
+        </div>
+        <a href="{% url 'accounts:address_form' %}" class="bg-brand-green text-white font-display font-bold px-4 py-2 rounded-stall text-sm hover:brightness-110 transition shadow">
+            + Add New Address
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Address Card 1 (Default) -->
+        <div class="bg-white p-5 rounded-stall border-2 border-brand-marigold shadow-sm relative space-y-3">
+            <div class="flex justify-between items-start">
+                <span class="bg-brand-marigold text-surface-ink text-[11px] font-bold px-2 py-0.5 stall-flag">Default Address</span>
+                <div class="flex gap-2 text-xs">
+                    <a href="{% url 'accounts:address_form' %}" class="text-brand-indigo font-bold hover:underline">Edit</a>
+                </div>
+            </div>
+            <div class="space-y-1 text-sm">
+                <h3 class="font-display font-bold text-base text-surface-ink">Ram Shrestha (Home)</h3>
+                <p class="text-neutral-700">Ward #4, Main Bazaar Road</p>
+                <p class="text-xs text-neutral-600"><strong>Landmark:</strong> Opposite Pashupati Temple Gate</p>
+                <p class="text-xs text-neutral-500 tabular-nums">Phone: +977 9845123456</p>
+            </div>
+        </div>
+
+        <!-- Address Card 2 -->
+        <div class="bg-white p-5 rounded-stall border border-neutral-200 shadow-sm relative space-y-3">
+            <div class="flex justify-between items-start">
+                <span class="bg-neutral-200 text-neutral-700 text-[11px] font-bold px-2 py-0.5 rounded">Workplace</span>
+                <div class="flex gap-2 text-xs">
+                    <a href="#" class="text-neutral-500 hover:text-brand-green">Set as Default</a>
+                    <span class="text-neutral-300">|</span>
+                    <a href="{% url 'accounts:address_form' %}" class="text-brand-indigo font-bold hover:underline">Edit</a>
+                </div>
+            </div>
+            <div class="space-y-1 text-sm">
+                <h3 class="font-display font-bold text-base text-surface-ink">Ram Shrestha (Office)</h3>
+                <p class="text-neutral-700">Ward #10, Industrial District</p>
+                <p class="text-xs text-neutral-600"><strong>Landmark:</strong> Inside Hetauda Industrial District, Near Gate 2</p>
+                <p class="text-xs text-neutral-500 tabular-nums">Phone: +977 9845123456</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

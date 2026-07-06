@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Manage Inventory — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <div class="flex justify-between items-center bg-white p-6 rounded-stall border border-neutral-200 shadow-sm">
+        <div>
+            <h1 class="font-display font-bold text-2xl text-brand-green">Stall Inventory Table</h1>
+            <p class="text-xs text-neutral-500">Toggle active/inactive status live with one click.</p>
+        </div>
+        <a href="{% url 'catalog:vendor_product_form' %}" class="bg-brand-marigold text-surface-ink font-display font-bold px-4 py-2 rounded-stall text-sm shadow">
+            + Add Product
+        </a>
+    </div>
+
+    <div class="bg-white rounded-stall border border-neutral-200 overflow-hidden shadow-sm">
+        <table class="w-full text-left text-sm">
+            <thead class="bg-surface-base border-b text-xs font-bold text-neutral-700 uppercase">
+                <tr>
+                    <th class="p-4">Product Name</th>
+                    <th class="p-4">Price (NPR)</th>
+                    <th class="p-4">Stock Level</th>
+                    <th class="p-4">Live Toggle</th>
+                    <th class="p-4 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-neutral-200">
+                <tr>
+                    <td class="p-4 font-display font-bold text-surface-ink">Traditional Cotton Kurta Set</td>
+                    <td class="p-4 tabular-nums font-semibold">NPR 1,850</td>
+                    <td class="p-4"><span class="bg-state-success/15 text-state-success px-2 py-0.5 rounded text-xs font-bold">12 Units</span></td>
+                    <td class="p-4">
+                        <button hx-post="#" class="bg-state-success text-white px-3 py-1 rounded-stall text-xs font-bold shadow">🟢 ACTIVE</button>
+                    </td>
+                    <td class="p-4 text-right">
+                        <a href="{% url 'catalog:vendor_product_form' %}" class="text-brand-indigo font-bold hover:underline text-xs">Edit</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="p-4 font-display font-bold text-surface-ink">Palpali Dhaka Shawl</td>
+                    <td class="p-4 tabular-nums font-semibold">NPR 1,450</td>
+                    <td class="p-4"><span class="bg-state-error/15 text-state-error px-2 py-0.5 rounded text-xs font-bold">2 Units (Low)</span></td>
+                    <td class="p-4">
+                        <button hx-post="#" class="bg-state-success text-white px-3 py-1 rounded-stall text-xs font-bold shadow">🟢 ACTIVE</button>
+                    </td>
+                    <td class="p-4 text-right">
+                        <a href="{% url 'catalog:vendor_product_form' %}" class="text-brand-indigo font-bold hover:underline text-xs">Edit</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

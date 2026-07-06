@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}{% if address %}Edit{% else %}Add{% endif %} Delivery Address — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto bg-white p-6 sm:p-8 rounded-stall border border-neutral-200 shadow-sm my-6 space-y-6">
+    <div class="flex justify-between items-start border-b pb-4">
+        <div>
+            <h1 class="font-display font-bold text-2xl text-brand-green">{% if address %}Edit{% else %}Add{% endif %} Delivery Address — Hetauda</h1>
+            <p class="text-xs text-neutral-600">Landmark-first addressing + GPS pin — Makwanpur hyperlocal</p>
+        </div>
+        <a href="{% url 'accounts:address_list' %}" class="text-xs text-brand-indigo hover:underline">← Back to addresses</a>
+    </div>
+    
+    <form method="post" class="space-y-5">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+        <div class="bg-state-error/10 border border-state-error text-state-error p-3 rounded-stall text-sm">
+            {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-xs font-bold text-neutral-700 uppercase mb-1" for="{{ form.label.id_for_label }}">Address Label *</label>
+                {{ form.label }}
+                {{ form.label.errors }}
+                <p class="text-[10px] text-neutral-500">{{ form.label.help_text }}</p>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Municipality *</label>
+                {{ form.municipality }}
+                {{ form.municipality.errors }}
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-xs font-bold text-neutral-700 uppercase mb-1" for="{{ form.full_address.id_for_label }}">Full Address *</label>
+            {{ form.full_address }}
+            {{ form.full_address.errors }}
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Hetauda Ward No. *</label>
+                {{ form.ward_number }}
+                {{ form.ward_number.errors }}
+            </div>
+            <div class="flex items-end">
+                <label class="flex items-center gap-2 text-sm bg-surface-base border border-neutral-300 rounded-stall px-3 py-2 w-full">
+                    {{ form.is_default }}
+                    <span class="font-semibold">Set as Default Delivery Address</span>
+                </label>
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Landmark * <span class="text-brand-marigold normal-case">(Crucial for local delivery)</span></label>
+            {{ form.landmark }}
+            {{ form.landmark.errors }}
+            <span class="text-[11px] text-neutral-500">Helps our rider drop off without calling you 5 times.</span>
+        </div>
+
+        <!-- MAPS — Makwanpur District pinpointing -->
+        <div class="space-y-2">
+            <label class="block text-xs font-bold text-neutral-700 uppercase">📍 Pin Exact Delivery Location — Makwanpur Map</label>
+            <div class="text-[11px] text-neutral-600 bg-state-info/5 border border-state-info/20 p-2 rounded">
+                Click map to drop pin • drag marker to adjust • GPS auto-detect if allowed • restricted to Makwanpur district bounds
+            </div>
+            {% include "includes/makwanpur_map.html" with lat=address.latitude|default:"27.4287" lon=address.longitude|default:"85.0320" zoom=14 height="360px" map_id="address" enable_geolocate="true" %}
+            <div class="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                    <label class="block text-[10px] font-bold text-neutral-500 uppercase">Latitude</label>
+                    {{ form.latitude }}
+                    <div class="font-mono text-[11px] bg-surface-base border px-2 py-1 rounded mt-1"><span id="lat-display">{{ address.latitude|default:"27.428700" }}</span></div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-neutral-500 uppercase">Longitude</label>
+                    {{ form.longitude }}
+                    <div class="font-mono text-[11px] bg-surface-base border px-2 py-1 rounded mt-1"><span id="lon-display">{{ address.longitude|default:"85.032000" }}</span></div>
+                </div>
+            </div>
+            <p class="text-[10px] text-neutral-500">Coordinates feed delivery-zone logic • saved securely • used for 2-4hr hyperlocal SLA</p>
+        </div>
+
+        <div class="pt-4 flex justify-end gap-3 border-t">
+            <a href="{% url 'accounts:address_list' %}" class="px-5 py-2 border border-neutral-300 rounded-stall text-sm font-semibold hover:bg-surface-base">Cancel</a>
+            <button type="submit" class="bg-brand-green text-white font-display font-bold px-6 py-2.5 rounded-stall shadow hover:brightness-110">
+                {% if address %}Update Address{% else %}Save Address + GPS Pin{% endif %}
+            </button>
+        </div>
+    </form>
+
+    <div class="text-[11px] text-neutral-500 bg-surface-base border rounded-stall p-3">
+        🔒 <strong>Privacy:</strong> GPS pins are used only for delivery routing within Makwanpur district. Stored encrypted, never shared. E-Commerce Act 2081 compliant.
+    </div>
+</div>
+{% endblock %}

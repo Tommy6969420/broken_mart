@@ -1,0 +1,123 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-surface-base">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Makwanpur Mart — Hetauda Hyperlocal Marketplace{% endblock %}</title>
+    
+    <!-- PWA Manifest & Theme Color -->
+    <meta name="theme-color" content="#1F4B3F">
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+
+    <!-- Google Fonts: Baloo 2 (Display/Devanagari) & Hind (Body/Devanagari) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Hind:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN Configured with Makwanpur Mart Design System -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            green: "#1F4B3F",
+                            marigold: "#F0A202",
+                            indigo: "#3D3763",
+                        },
+                        surface: {
+                            base: "#F2F0E6",
+                            ink: "#22261F",
+                        },
+                        state: {
+                            success: "#2E7D4F",
+                            warning: "#C97A1B",
+                            error: "#B3452C",
+                            info: "#2E5C8A",
+                        },
+                        neutral: {
+                            50: "#F7F6F1", 100: "#EDEBE2", 200: "#DCD9CC", 300: "#C2BEAC",
+                            400: "#9C9784", 500: "#746F5D", 600: "#55503F", 700: "#3D3A2E",
+                            800: "#2A281F", 900: "#22261F",
+                        },
+                    },
+                    fontFamily: {
+                        display: ["Baloo 2", "sans-serif"],
+                        body: ["Hind", "sans-serif"],
+                    },
+                    borderRadius: {
+                        stall: "0.75rem",
+                    },
+                },
+            },
+        };
+    </script>
+
+    <!-- HTMX & Alpine.js for interactive wireframes without complex SPA complexity -->
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <style>
+        body { font-family: 'Hind', sans-serif; color: #22261F; background-color: #F2F0E6; }
+        h1, h2, h3, h4, .font-display { font-family: 'Baloo 2', sans-serif; }
+        /* Signature stall-flag tag shape (notch on right) */
+        .stall-flag {
+            clip-path: polygon(0 0, 92% 0, 100% 50%, 92% 100%, 0 100%);
+        }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+        /* Focus styles for WCAG AA compliance */
+        *:focus-visible { outline: 2px solid #3D3763 !important; outline-offset: 2px; }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-brand-marigold selection:text-surface-ink" x-data="{ mobileMenuOpen: false, lang: 'EN' }">
+
+    <!-- Top Notice / PWA Offline Banner -->
+    <div id="offline-banner" class="hidden bg-state-warning text-white text-small py-1 px-4 text-center font-medium">
+        <span class="inline-block mr-2">⚠️</span> You are currently browsing offline. Showing cached local bazaar items.
+    </div>
+
+    <!-- Header Include -->
+    {% include "includes/header.html" %}
+
+    <!-- Main Content Area -->
+    <main class="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Toast / Messages Block -->
+        {% if messages %}
+        <div class="mb-6 space-y-2">
+            {% for message in messages %}
+            <div class="p-4 rounded-stall flex items-center justify-between {% if message.tags == 'error' %}bg-state-error text-white{% elif message.tags == 'success' %}bg-state-success text-white{% else %}bg-state-info text-white{% endif %} shadow-sm">
+                <span class="font-medium">{{ message }}</span>
+                <button type="button" onclick="this.parentElement.remove()" class="text-white hover:opacity-75 font-bold px-2">×</button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer Include -->
+    {% include "includes/footer.html" %}
+
+    <!-- Marketplace Improvement: Persistent Support Entry Point (every page) -->
+    {% include "includes/support_fab.html" %}
+
+    <!-- HTMX Indicator -->
+    <div id="global-indicator" class="htmx-indicator fixed bottom-20 right-4 bg-brand-green text-white px-4 py-2 rounded-stall shadow-lg flex items-center gap-2 border border-brand-marigold z-40">
+        <svg class="animate-spin h-5 w-5 text-brand-marigold" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="text-small font-medium">Updating Bazaar...</span>
+    </div>
+
+    {% block extra_js %}{% endblock %}
+    <script>
+        window.addEventListener('offline', () => document.getElementById('offline-banner').classList.remove('hidden'));
+        window.addEventListener('online', () => document.getElementById('offline-banner').classList.add('hidden'));
+    </script>
+</body>
+</html>

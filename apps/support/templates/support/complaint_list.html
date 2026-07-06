@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}My Filed Grievances — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="space-y-6 max-w-4xl mx-auto">
+    <h1 class="font-display font-bold text-3xl text-brand-green">My Filed Grievances &amp; Resolutions</h1>
+    <div class="bg-white p-6 rounded-stall border shadow-sm flex justify-between items-center text-sm">
+        <div>
+            <span class="bg-state-success text-white text-xs font-bold px-2.5 py-0.5 rounded">RESOLVED</span>
+            <h3 class="font-display font-bold text-lg mt-1">Dispute #GR-104: Return Policy Compliance</h3>
+        </div>
+        <a href="{% url 'support:complaint_detail' complaint_id=104 %}" class="bg-brand-green text-white px-4 py-2 rounded-stall font-bold text-xs shadow">View Resolution Notes</a>
+    </div>
+</div>
+{% endblock %}

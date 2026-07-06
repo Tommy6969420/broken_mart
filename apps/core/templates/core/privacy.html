@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy & Data Security — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto bg-white p-8 rounded-stall border border-neutral-200 shadow-sm space-y-6">
+    <div class="border-b pb-4">
+        <h1 class="font-display font-bold text-3xl text-brand-green">Privacy Policy &amp; Data Encryption</h1>
+        <p class="text-xs text-neutral-500 mt-1">Last updated: July 2026. Explicit data collection disclosure.</p>
+    </div>
+    <div class="prose max-w-none text-sm text-neutral-700 space-y-4">
+        <p>Makwanpur Mart prioritizes customer privacy and financial data security above all else.</p>
+        <h3 class="font-display font-bold text-lg text-brand-green">1. What Data We Collect &amp; Why</h3>
+        <ul class="list-disc list-inside space-y-1">
+            <li><strong>Mobile Phone Number:</strong> Primary identity verification via Sparrow SMS OTP.</li>
+            <li><strong>Delivery Addresses &amp; Ward Numbers:</strong> Required to coordinate local Hetauda rider dispatch.</li>
+            <li><strong>Vendor Bank/Payout Details:</strong> Encrypted at rest via Fernet field encryption (`django-cryptography`) to process automated earnings payouts.</li>
+        </ul>
+        <h3 class="font-display font-bold text-lg text-brand-green">2. No Raw Payment Storage</h3>
+        <p>We never store credit cards or eSewa/Khalti pin codes. All transactions process via NRB-approved payment gateway tokens.</p>
+    </div>
+</div>
+{% endblock %}

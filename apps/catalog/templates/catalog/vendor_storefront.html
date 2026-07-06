@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}{{ vendor.shop_name }} — Verified Hetauda Vendor Storefront{% endblock %}
+{% block content %}
+<div class="space-y-8">
+    <!-- Storefront Banner — DYNAMIC Trust & Transparency -->
+    <div class="bg-brand-green text-white rounded-stall p-8 shadow-md relative overflow-hidden border-2 border-brand-marigold">
+        <div class="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+            <div class="space-y-2 flex-grow">
+                <div class="flex items-center gap-3 flex-wrap">
+                    <h1 class="font-display font-bold text-3xl text-white">{{ vendor.shop_name }}</h1>
+                    {% if vendor.is_verified %}
+                    <span class="bg-brand-indigo text-white font-display font-bold text-xs px-3 py-1 stall-flag">✓ Verified Vendor</span>
+                    {% else %}
+                    <span class="bg-neutral-500 text-white font-display font-bold text-xs px-3 py-1 rounded-full">⏳ Pending Verification</span>
+                    {% endif %}
+                    {% if vendor.is_trusted_seller %}
+                    <span class="bg-state-success text-white font-display font-bold text-xs px-3 py-1 rounded-full">★ Trusted Seller</span>
+                    {% endif %}
+                </div>
+                <p class="text-sm text-neutral-200 max-w-xl leading-relaxed">
+                    {{ vendor.shop_description|default:"Verified local Makwanpur vendor — hyperlocal delivery across Hetauda wards." }}
+                </p>
+                <div class="pt-2 flex flex-wrap gap-4 text-xs text-brand-marigold font-medium">
+                    <span>📍 {{ vendor.location_display }}{% if vendor.shop_landmark %} — {{ vendor.shop_landmark }}{% endif %}</span>
+                    <span>⚡ Average Delivery: 2-4 Hours</span>
+                    <span>🛡️ {{ vendor.return_window_days }}-Day {{ vendor.get_refund_method_display }}</span>
+                    <span>★ {{ vendor.average_rating|floatformat:1 }}/5 ({{ vendor.total_reviews_count }} reviews)</span>
+                </div>
+                <!-- Seller Ratings snapshot -->
+                <div class="flex gap-4 text-[11px] text-neutral-300 pt-1">
+                    <span>Trust Score: <strong class="text-brand-marigold">{{ vendor.trust_score }}/100</strong></span>
+                    <span>• {{ vendor.total_sales }} orders fulfilled</span>
+                    <span>• {{ stats.total_products }} active listings</span>
+                    <span>• {{ vendor.get_shop_municipality_display }}</span>
+                </div>
+            </div>
+            <div class="bg-black/20 p-4 rounded-stall text-center shrink-0 border border-neutral-600 min-w-[140px]">
+                <div class="font-display font-bold text-2xl text-brand-marigold">{{ vendor.average_rating|floatformat:1 }} ★</div>
+                <span class="text-[11px] text-neutral-300 block">Seller Rating</span>
+                <span class="text-[11px] text-neutral-300">Over {{ vendor.total_sales }}+ Verified Orders</span>
+                {% if vendor.verified_at %}
+                <div class="text-[9px] text-neutral-400 mt-1">Verified {{ vendor.verified_at|date:"M Y" }}</div>
+                {% endif %}
+            </div>
+        </div>
+        <!-- watermark -->
+        <div class="absolute right-0 bottom-0 translate-x-6 translate-y-6 opacity-10 font-display font-bold text-7xl pointer-events-none">
+            {{ vendor.shop_name|slice:":2"|upper }}
+        </div>
+    </div>
+
+    <!-- Return Policy — always visible Trust & Transparency -->
+    <div class="bg-state-warning/10 border-2 border-brand-marigold rounded-stall p-4">
+        <div class="font-display font-bold text-surface-ink flex items-center gap-2">🛡️ {{ vendor.shop_name }} Return & Refund Policy</div>
+        <p class="text-xs text-neutral-800 mt-1 leading-relaxed">
+            <strong>{{ vendor.return_window_days }}-Day {{ vendor.get_refund_method_display }}:</strong>
+            {{ vendor.return_policy_text }}
+        </p>
+        <div class="text-[10px] text-neutral-600 mt-2">
+            Platform protected • Grievance Officer — E-Commerce Act 2081 • Live chat support bottom-right
+        </div>
+    </div>
+
+    <!-- Active Products Grid — DYNAMIC -->
+    <div class="space-y-4">
+        <div class="flex justify-between items-center">
+            <h2 class="font-display font-bold text-2xl text-brand-green">
+                Stall Products ({{ stats.total_products }} Active Approved Listings)
+            </h2>
+            <div class="text-xs text-neutral-600">
+                Sorted by newest • moderation approved only
+            </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {% for product in products %}
+            <div class="bg-white rounded-stall border border-neutral-200 overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition">
+                <div class="relative">
+                    {% with img=product.images.first %}
+                    {% if img %}<img src="{{ img.image.url }}" alt="{{ product.name }}" loading="lazy" class="w-full h-40 object-cover">{% else %}<div class="w-full h-40 bg-surface-base flex items-center justify-center text-3xl">🛍️</div>{% endif %}
+                    {% endwith %}
+                    {% if product.discounted_price %}<span class="absolute top-2 left-2 bg-brand-marigold text-surface-ink text-[10px] px-2 py-0.5 font-bold rounded">Sale</span>{% endif %}
+                    <span class="absolute bottom-2 right-2 text-[9px] bg-black/60 text-white px-1.5 py-0.5 rounded">{{ product.get_moderation_status_display }}</span>
+                </div>
+                <div class="p-4 space-y-2 flex-grow">
+                    <span class="bg-surface-base text-[10px] px-2 py-0.5 rounded border">{{ product.category.name }}</span>
+                    <h3 class="font-display font-bold text-[15px] text-surface-ink line-clamp-2 h-10">{{ product.name }}</h3>
+                    <div class="flex items-baseline gap-2">
+                        <span class="font-display font-bold text-lg text-brand-green tabular-nums">NPR {{ product.effective_price|floatformat:0 }}</span>
+                        {% if product.discounted_price %}<span class="text-xs line-through text-neutral-400">NPR {{ product.price|floatformat:0 }}</span>{% endif %}
+                    </div>
+                    <div class="text-[10px] text-neutral-500">Payable ~ NPR {{ product.pricing_breakdown.total_payable|floatformat:0 }} incl. VAT</div>
+                </div>
+                <div class="px-4 pb-3">
+                    <a href="{% url 'catalog:product_detail' slug=product.slug %}" class="block text-center bg-brand-green text-white py-2 rounded-stall text-xs font-display font-bold hover:brightness-110 w-full">View Item →</a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-4 bg-white p-10 rounded-stall border text-center space-y-3">
+                <div class="text-4xl">🏪</div>
+                <h3 class="font-display font-bold text-lg">No approved products yet</h3>
+                <p class="text-xs text-neutral-600 max-w-md mx-auto">
+                    {{ vendor.shop_name }} has {{ stats.total_products }} draft listings pending moderation.
+                    {% if request.user == vendor.user %}
+                    <br><a href="{% url 'catalog:vendor_product_list' %}" class="text-brand-indigo underline">Manage your products →</a>
+                    {% endif %}
+                </p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Seller Reviews -->
+    <div class="bg-white rounded-stall border p-6 shadow-sm">
+        <h3 class="font-display font-bold text-lg text-brand-green mb-3">Seller Trust Signals — {{ vendor.shop_name }}</h3>
+        <div class="grid sm:grid-cols-4 gap-4 text-center text-xs">
+            <div><div class="font-display font-bold text-2xl text-brand-green">{{ vendor.average_rating|floatformat:1 }}★</div><div class="text-neutral-600">Average Rating</div></div>
+            <div><div class="font-display font-bold text-2xl text-surface-ink">{{ vendor.total_reviews_count }}</div><div class="text-neutral-600">Seller Reviews</div></div>
+            <div><div class="font-display font-bold text-2xl text-state-success">{{ vendor.trust_score }}%</div><div class="text-neutral-600">Trust Score</div></div>
+            <div><div class="font-display font-bold text-2xl text-brand-indigo">{{ vendor.total_sales }}</div><div class="text-neutral-600">Orders Fulfilled</div></div>
+        </div>
+    </div>
+</div>
+{% endblock %}

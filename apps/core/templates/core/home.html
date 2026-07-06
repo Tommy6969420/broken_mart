@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Makwanpur Mart — Hetauda's Fast & Reliable Local Bazaar{% endblock %}
+
+{% block content %}
+<div class="space-y-12">
+    <!-- Hero Section -->
+    <section class="bg-brand-green text-white rounded-stall p-6 sm:p-10 shadow-lg relative overflow-hidden border-2 border-brand-marigold/30">
+        <div class="max-w-3xl relative z-10 space-y-4">
+            <div class="inline-block bg-brand-marigold text-surface-ink font-display font-bold text-xs px-3 py-1 stall-flag uppercase tracking-wider">
+                Makwanpur District Exclusive
+            </div>
+            <h1 class="font-display font-bold text-3xl sm:text-5xl leading-tight text-white">
+                Why Wait 4 Days For Kathmandu Delivery? <span class="text-brand-marigold">Get It Today in Hetauda.</span>
+            </h1>
+            <p class="text-base sm:text-lg text-neutral-200 leading-relaxed">
+                Makwanpur Mart connects you directly to Hetauda's verified local shops (Wards 1–19). Delivered within hours, not days. Hassle-free doorstep returns handled by local mediators you trust.
+            </p>
+            <div class="pt-4 flex flex-wrap items-center gap-4">
+                <a href="{% url 'catalog:category_list' %}" class="bg-brand-marigold text-surface-ink font-display font-bold px-6 py-3 rounded-stall hover:brightness-105 transition shadow-md flex items-center gap-2">
+                    <span>Explore Local Stalls</span>
+                    <span>→</span>
+                </a>
+                <a href="{% url 'core:return_policy' %}" class="bg-white/10 hover:bg-white/20 text-white border border-white/30 font-display font-semibold px-5 py-3 rounded-stall transition text-sm">
+                    Read Our Return &amp; Replacement Promise
+                </a>
+            </div>
+            <div class="pt-4 grid grid-cols-3 gap-4 border-t border-neutral-700/60 text-xs sm:text-sm">
+                <div>
+                    <strong class="block text-brand-marigold font-display text-lg">2-4 Hours</strong>
+                    <span>Average Delivery (Wards 1-10)</span>
+                </div>
+                <div>
+                    <strong class="block text-brand-marigold font-display text-lg">100% Local</strong>
+                    <span>Verified Door-to-Door Vendors</span>
+                </div>
+                <div>
+                    <strong class="block text-brand-marigold font-display text-lg">Easy Returns</strong>
+                    <span>Instant Replacement &amp; COD</span>
+                </div>
+            </div>
+        </div>
+        <div class="absolute right-0 bottom-0 translate-x-10 translate-y-10 opacity-10 font-display font-bold text-9xl pointer-events-none text-white">
+            MM
+        </div>
+    </section>
+
+    <!-- Category Navigation — DYNAMIC -->
+    <section class="space-y-4">
+        <div class="flex justify-between items-end">
+            <div>
+                <h2 class="font-display font-bold text-2xl text-brand-green">Browse Hetauda Stalls by Category</h2>
+                <p class="text-sm text-neutral-600">Verified inventory — live from database</p>
+            </div>
+            <a href="{% url 'catalog:category_list' %}" class="text-sm font-semibold text-brand-indigo hover:underline">View All Categories →</a>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {% for category in categories %}
+            <a href="{% url 'catalog:category_detail' slug=category.slug %}" class="bg-white p-5 rounded-stall border border-neutral-200 hover:border-brand-marigold transition shadow-sm group text-center space-y-3">
+                <div class="w-16 h-16 mx-auto bg-brand-green/10 text-brand-green rounded-full flex items-center justify-center text-3xl group-hover:scale-110 transition">
+                    {% if category.icon %}<img src="{{ category.icon.url }}" alt="{{ category.name }}" loading="lazy" class="w-10 h-10 object-contain">{% else %}
+                    {% cycle '👗' '💄' '🥟' '🧶' '📱' '🏠' '📦' '🛒' %}
+                    {% endif %}
+                </div>
+                <div>
+                    <h3 class="font-display font-bold text-lg text-surface-ink group-hover:text-brand-green">{{ category.name }}</h3>
+                    {% if category.product_count %}<span class="inline-block bg-brand-marigold/20 text-surface-ink text-xs font-semibold px-2.5 py-0.5 rounded-full mt-1">{{ category.product_count }} items</span>{% endif %}
+                </div>
+                <p class="text-xs text-neutral-500">
+                    {% if category.children.all %}
+                        {{ category.children.all|join:", "|truncatechars:45 }}
+                    {% else %}
+                        Verified Hetauda vendors
+                    {% endif %}
+                </p>
+            </a>
+            {% empty %}
+            <div class="col-span-4 bg-white p-8 rounded-stall border text-center">
+                <p class="text-neutral-600">No categories yet — run <code>python seed.py</code></p>
+                <a href="{% url 'catalog:category_list' %}" class="text-brand-indigo underline text-sm">Browse all →</a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Featured / Trending Products — DYNAMIC -->
+    <section class="space-y-4">
+        <div class="flex justify-between items-center">
+            <h2 class="font-display font-bold text-2xl text-brand-green">Trending in Hetauda Bazaar</h2>
+            <a href="{% url 'catalog:product_list' %}" class="text-sm font-semibold text-brand-indigo hover:underline">View All Stalls →</a>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for product in featured_products %}
+            <div class="bg-white rounded-stall border border-neutral-200 overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition">
+                <div>
+                    <div class="bg-neutral-100 h-48 relative overflow-hidden">
+                        {% with img=product.images.first %}
+                        {% if img %}<img src="{{ img.image.url }}" alt="{{ product.name }}" loading="lazy" class="w-full h-full object-cover">{% else %}<div class="w-full h-full flex items-center justify-center text-4xl">🛍️</div>{% endif %}
+                        {% endwith %}
+                        <div class="absolute top-2 left-2 flex flex-col gap-1">
+                        {% if product.vendor.is_verified %}<span class="bg-brand-indigo text-white text-[10px] font-bold px-2 py-0.5 stall-flag">✓ Verified</span>{% endif %}
+                        {% if product.discounted_price %}<span class="bg-brand-marigold text-surface-ink text-[10px] font-bold px-2 py-0.5 rounded">Save NPR {{ product.price|floatformat:0|add:"-0" }}</span>{% endif %}
+                        </div>
+                        <span class="absolute top-2 right-2 bg-white/90 text-[10px] px-2 py-0.5 rounded-full border">Ward {{ product.vendor.shop_ward_number }}</span>
+                    </div>
+                    <div class="p-4 space-y-2">
+                        <div class="flex items-center justify-between text-xs">
+                            <a href="{% url 'catalog:vendor_storefront' slug=product.vendor.shop_slug %}" class="text-brand-indigo font-semibold hover:underline truncate">
+                                {{ product.vendor.shop_name }}
+                                {% if product.vendor.is_verified %}<span class="text-[9px]">✓</span>{% endif %}
+                            </a>
+                            <span class="text-brand-marigold text-[11px] font-bold">{{ product.vendor.average_rating|floatformat:1 }}★</span>
+                        </div>
+                        <h3 class="font-display font-bold text-base text-surface-ink line-clamp-2 h-12">{{ product.name }}</h3>
+                        <div class="flex items-baseline gap-2 flex-wrap">
+                            <span class="font-display font-bold text-lg text-brand-green tabular-nums">NPR {{ product.effective_price|floatformat:0 }}</span>
+                            {% if product.discounted_price %}<span class="text-xs text-neutral-400 line-through">NPR {{ product.price|floatformat:0 }}</span>{% endif %}
+                        </div>
+                        <div class="text-[10px] text-neutral-500">Total payable ~ NPR {{ product.pricing_breakdown.total_payable|floatformat:0 }} incl. VAT</div>
+                    </div>
+                </div>
+                <div class="p-4 pt-0 border-t border-neutral-100 mt-2 flex items-center justify-between gap-2 text-[11px]">
+                    <span class="{% if product.is_approved_and_live %}text-state-success{% else %}text-state-warning{% endif %} font-medium">
+                        {% if product.is_approved_and_live %}✓ In Stock — delivery today{% else %}⏳ {{ product.get_moderation_status_display }}{% endif %}
+                    </span>
+                    <a href="{% url 'catalog:product_detail' slug=product.slug %}" class="bg-brand-green text-white px-3 py-1.5 rounded-stall text-xs font-display font-bold hover:brightness-110">View</a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-4 bg-white p-10 rounded-stall border text-center space-y-3">
+                <div class="text-4xl">📦</div>
+                <h3 class="font-display font-bold text-lg">No live products yet</h3>
+                <p class="text-sm text-neutral-600">Run the seeder to populate Hetauda bazaar:</p>
+                <code class="bg-surface-base px-3 py-1 rounded text-xs">python manage.py shell < seed.py</code>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- New Arrivals — DYNAMIC if available -->
+    {% if new_arrivals %}
+    <section class="space-y-4">
+        <h2 class="font-display font-bold text-xl text-brand-indigo">New Arrivals — Hetauda</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {% for p in new_arrivals|slice:":12" %}
+            <a href="{% url 'catalog:product_detail' slug=p.slug %}" class="bg-white border rounded-stall p-3 hover:border-brand-green text-center space-y-1 block">
+                <div class="h-20 bg-surface-base rounded flex items-center justify-center text-2xl overflow-hidden">
+                    {% with img=p.images.first %}{% if img %}<img src="{{ img.image.url }}" loading="lazy" class="w-full h-full object-cover">{% else %}🛍️{% endif %}{% endwith %}
+                </div>
+                <div class="font-display font-semibold text-xs truncate">{{ p.name }}</div>
+                <div class="text-[11px] text-brand-green font-bold tabular-nums">NPR {{ p.effective_price|floatformat:0 }}</div>
+                <div class="text-[9px] text-neutral-500">{{ p.vendor.shop_ward_number }} ward • {{ p.vendor.average_rating|floatformat:1 }}★</div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Why Buy Local — unchanged trust pitch -->
+    <section class="bg-white rounded-stall p-8 border border-neutral-200 shadow-sm">
+        <div class="text-center max-w-2xl mx-auto mb-8">
+            <span class="text-brand-marigold font-display font-bold text-sm uppercase tracking-wide">The Makwanpur Guarantee</span>
+            <h2 class="font-display font-bold text-3xl text-brand-green">Built For Hetauda, Not A Megacity</h2>
+            <p class="text-sm text-neutral-600">Why thousands of Hetauda shoppers are switching from national platforms to neighborhood verified stalls.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="p-5 bg-surface-base rounded-stall border border-neutral-200 space-y-2">
+                <div class="w-10 h-10 bg-brand-green text-white rounded-stall flex items-center justify-center font-display font-bold text-lg">⚡</div>
+                <h3 class="font-display font-bold text-lg text-surface-ink">Speed You Can Trust</h3>
+                <p class="text-xs text-neutral-600 leading-relaxed">National carriers take 3-5 days from Kathmandu. Our Hetauda riders pick up directly from local bazaar stalls and drop off at your ward within 2 to 4 hours.</p>
+            </div>
+            <div class="p-5 bg-surface-base rounded-stall border border-neutral-200 space-y-2">
+                <div class="w-10 h-10 bg-brand-marigold text-surface-ink rounded-stall flex items-center justify-center font-display font-bold text-lg">🔄</div>
+                <h3 class="font-display font-bold text-lg text-surface-ink">No Return Nightmares</h3>
+                <p class="text-xs text-neutral-600 leading-relaxed">Size didn't fit? Product damaged? Every stall displays its explicit return policy — transparently on every product page. Doorstep pickup included.</p>
+            </div>
+            <div class="p-5 bg-surface-base rounded-stall border border-neutral-200 space-y-2">
+                <div class="w-10 h-10 bg-brand-indigo text-white rounded-stall flex items-center justify-center font-display font-bold text-lg">🛡️</div>
+                <h3 class="font-display font-bold text-lg text-surface-ink">Verified Local Identity</h3>
+                <p class="text-xs text-neutral-600 leading-relaxed">Every vendor is personally vetted — ward registration + PAN — under Electronic Commerce Act 2081. Dynamic ✓ Verified badge checks DB live.</p>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

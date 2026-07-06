@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Checkout & Payment Choice — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-8" x-data="{ payMethod: 'cod' }">
+    <div class="border-b pb-4">
+        <h1 class="font-display font-bold text-3xl text-brand-green">Checkout &amp; Delivery Dispatch</h1>
+        <p class="text-sm text-neutral-600">Review your Hetauda ward address and select your payment method.</p>
+    </div>
+
+    <form action="{% url 'orders:order_confirmation' %}" method="post" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Left: Address & Payment Selection -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Step 1: Address Selection Inline -->
+            <div class="bg-white p-6 rounded-stall border border-neutral-200 shadow-sm space-y-4">
+                <div class="flex justify-between items-center border-b pb-3">
+                    <h2 class="font-display font-bold text-lg text-brand-green">1. Delivery Address (Hetauda)</h2>
+                    <a href="{% url 'accounts:address_form' %}" class="text-xs font-bold text-brand-indigo hover:underline">+ Add New Address Inline</a>
+                </div>
+                <!-- Address Radio Card -->
+                <label class="block p-4 rounded-stall border-2 border-brand-green bg-brand-green/5 cursor-pointer">
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-center gap-2">
+                            <input type="radio" name="address_id" value="1" checked class="text-brand-green">
+                            <span class="font-display font-bold text-base text-surface-ink">Ram Shrestha (Home - Ward #4)</span>
+                        </div>
+                        <span class="bg-brand-marigold text-surface-ink text-[10px] px-2 py-0.5 stall-flag">Default</span>
+                    </div>
+                    <p class="text-xs text-neutral-700 mt-2 ml-5">Main Bazaar Road &bull; <strong>Landmark:</strong> Opposite Pashupati Temple Gate</p>
+                    <p class="text-xs text-neutral-500 mt-0.5 ml-5 tabular-nums">Contact: +977 9845123456</p>
+                </label>
+            </div>
+
+            <!-- Step 2: Payment Method Selection (EQUALLY PROMINENT COD VS DIGITAL) -->
+            <div class="bg-white p-6 rounded-stall border border-neutral-200 shadow-sm space-y-4">
+                <h2 class="font-display font-bold text-lg text-brand-green border-b pb-3">2. Choose Payment Method (Equally Prominent)</h2>
+                <p class="text-xs text-neutral-600">We proudly support local digital wallets and traditional cash on delivery.</p>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <!-- Choice 1: Cash on Delivery (COD) -->
+                    <label @click="payMethod = 'cod'" :class="payMethod === 'cod' ? 'border-brand-marigold bg-brand-marigold/10 shadow-md' : 'border-neutral-200 bg-white'" class="p-5 rounded-stall border-2 cursor-pointer transition flex flex-col justify-between text-center space-y-3">
+                        <div class="text-3xl">💵</div>
+                        <div>
+                            <span class="font-display font-bold text-base text-surface-ink block">Cash on Delivery</span>
+                            <span class="text-[11px] text-neutral-600">Pay cash or QR to rider upon inspecting doorstep package</span>
+                        </div>
+                        <input type="radio" name="payment_method" value="COD" checked class="mx-auto text-brand-marigold">
+                    </label>
+
+                    <!-- Choice 2: eSewa Digital Wallet -->
+                    <label @click="payMethod = 'esewa'" :class="payMethod === 'esewa' ? 'border-state-success bg-state-success/10 shadow-md' : 'border-neutral-200 bg-white'" class="p-5 rounded-stall border-2 cursor-pointer transition flex flex-col justify-between text-center space-y-3">
+                        <div class="text-3xl">🟢</div>
+                        <div>
+                            <span class="font-display font-bold text-base text-surface-ink block">eSewa Mobile Wallet</span>
+                            <span class="text-[11px] text-neutral-600">NRB-approved instant digital payment redirection</span>
+                        </div>
+                        <input type="radio" name="payment_method" value="ESEWA" class="mx-auto text-state-success">
+                    </label>
+
+                    <!-- Choice 3: Khalti Digital Wallet -->
+                    <label @click="payMethod = 'khalti'" :class="payMethod === 'khalti' ? 'border-brand-indigo bg-brand-indigo/10 shadow-md' : 'border-neutral-200 bg-white'" class="p-5 rounded-stall border-2 cursor-pointer transition flex flex-col justify-between text-center space-y-3">
+                        <div class="text-3xl">🟣</div>
+                        <div>
+                            <span class="font-display font-bold text-base text-surface-ink block">Khalti Wallet [Phase 2]</span>
+                            <span class="text-[11px] text-neutral-600">Secure gateway verification with reward points</span>
+                        </div>
+                        <input type="radio" name="payment_method" value="KHALTI" class="mx-auto text-brand-indigo">
+                    </label>
+                </div>
+            </div>
+
+            <!-- Step 3: Special Delivery Instructions -->
+            <div class="bg-white p-6 rounded-stall border border-neutral-200 shadow-sm space-y-3">
+                <label class="block font-display font-bold text-sm text-surface-ink">Special Delivery / Rider Instructions (Optional)</label>
+                <textarea name="notes" rows="2" placeholder="E.g., Please ring top bell, leave package with shop downstairs if absent..." class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2 text-sm"></textarea>
+            </div>
+        </div>
+
+        <!-- Right: Order Summary Recap -->
+        <div class="bg-white p-6 rounded-stall border border-neutral-200 shadow-sm h-fit space-y-4">
+            <h3 class="font-display font-bold text-lg text-brand-green border-b pb-3">Final Recap</h3>
+            <div class="space-y-3 text-sm divide-y">
+                <div class="py-1 flex justify-between text-xs">
+                    <span>1x Traditional Kurta Set (Ward 4)</span>
+                    <span class="font-semibold tabular-nums">NPR 1,850</span>
+                </div>
+                <div class="py-1 flex justify-between text-xs">
+                    <span>1x Organic Face Glow Oil (Ward 2)</span>
+                    <span class="font-semibold tabular-nums">NPR 950</span>
+                </div>
+            </div>
+
+            <!-- Transparent Fee Breakdown (DELIVERY FEE AS DISTINCT LINE ITEM) -->
+            <div class="space-y-2 pt-2 border-t text-sm">
+                <div class="flex justify-between">
+                    <span class="text-neutral-600">Subtotal (2 items)</span>
+                    <span class="tabular-nums font-semibold">NPR 2,800</span>
+                </div>
+                <div class="flex justify-between text-brand-indigo font-bold bg-brand-indigo/5 p-2 rounded">
+                    <span>🛵 Local Delivery Fee (Ward 4 drop)</span>
+                    <span class="tabular-nums">NPR 100</span>
+                </div>
+            </div>
+
+            <div class="border-t pt-3 flex justify-between items-baseline">
+                <span class="font-display font-bold text-lg text-surface-ink">Total Payable</span>
+                <span class="font-display font-bold text-3xl text-brand-green tabular-nums">NPR 2,900</span>
+            </div>
+
+            <button type="submit" class="w-full bg-brand-green text-white font-display font-bold text-lg py-3.5 rounded-stall hover:brightness-110 transition shadow-lg">
+                Place Verified Order Now
+            </button>
+            <p class="text-[11px] text-neutral-500 text-center">By placing this order, you acknowledge vendor return rules and delivery terms.</p>
+        </div>
+    </form>
+</div>
+{% endblock %}

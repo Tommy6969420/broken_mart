@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Add / Edit Product — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto bg-white p-8 rounded-stall border border-neutral-200 shadow-sm my-6 space-y-6">
+    <h1 class="font-display font-bold text-2xl text-brand-green border-b pb-4">Add or Edit Product Listing</h1>
+    <form action="{% url 'catalog:vendor_product_list' %}" method="post" class="space-y-4 text-sm">
+        <div>
+            <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Product Title *</label>
+            <input type="text" placeholder="Traditional Cotton Kurta Set" required class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Selling Price (NPR) *</label>
+                <input type="number" value="1850" required class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2 tabular-nums">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Stock Quantity *</label>
+                <input type="number" value="15" required class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2 tabular-nums">
+            </div>
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Specific Return Policy * (Required)</label>
+            <input type="text" value="3-Day Doorstep Replacement for defects or size issues." required class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2">
+        </div>
+        <div class="p-4 bg-surface-base rounded-stall border border-dashed border-neutral-400 text-center space-y-2">
+            <span class="text-2xl">📸</span>
+            <span class="block text-xs font-bold text-neutral-700">Upload Product Images (Max 5 photos)</span>
+            <input type="file" class="text-xs">
+        </div>
+        <button type="submit" class="w-full bg-brand-green text-white font-display font-bold py-3 rounded-stall shadow">Save &amp; Publish Listing</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Vendor Application Status — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-xl mx-auto bg-white p-8 rounded-stall border border-neutral-200 shadow-sm my-6 space-y-6 text-center">
+    <div class="w-16 h-16 bg-state-warning/20 text-state-warning rounded-full flex items-center justify-center text-3xl mx-auto">
+        ⏳
+    </div>
+    <div>
+        <span class="inline-block bg-state-warning text-white font-display font-bold text-xs px-3 py-1 rounded-stall uppercase mb-2">Status: Under Verification</span>
+        <h1 class="font-display font-bold text-2xl text-brand-green">Application Received for "Shrestha Cloth Store"</h1>
+        <p class="text-sm text-neutral-600 mt-2 leading-relaxed">
+            Thank you for applying! Our solo founder is currently conducting in-person verification rounds across Hetauda Wards 1-10. We don't leave applicants hearing nothing.
+        </p>
+    </div>
+
+    <!-- Timeline of Onboarding Steps -->
+    <div class="p-5 bg-surface-base rounded-stall text-left space-y-3 text-xs border border-neutral-300">
+        <div class="flex items-center gap-3 text-state-success font-semibold">
+            <span class="w-5 h-5 bg-state-success text-white rounded-full flex items-center justify-center">✓</span>
+            <span>1. Online Application Submitted (July 04, 2026)</span>
+        </div>
+        <div class="flex items-center gap-3 text-state-warning font-bold">
+            <span class="w-5 h-5 bg-state-warning text-white rounded-full flex items-center justify-center animate-pulse">2</span>
+            <span>2. Door-to-Door Shop Visit &amp; PAN Verification (In Progress)</span>
+        </div>
+        <div class="flex items-center gap-3 text-neutral-400">
+            <span class="w-5 h-5 bg-neutral-300 text-neutral-600 rounded-full flex items-center justify-center">3</span>
+            <span>3. Storefront Activation &amp; Product Upload Unlocked</span>
+        </div>
+    </div>
+
+    <!-- Rejection State Demonstration Wireframe -->
+    <div class="hidden p-4 bg-state-error/10 border border-state-error rounded-stall text-left text-xs space-y-2">
+        <strong class="block text-state-error font-display text-sm">Status: Application Re-evaluation Required</strong>
+        <p class="text-neutral-700"><strong>Reason:</strong> Submitted PAN certificate scan was illegible or Ward #4 business registration document expired.</p>
+        <a href="{% url 'accounts:vendor_register' %}" class="inline-block bg-state-error text-white font-display font-bold px-4 py-1.5 rounded-stall mt-1">Reapply With Updated Documents</a>
+    </div>
+
+    <div class="flex justify-center gap-4 pt-2">
+        <a href="{% url 'core:home' %}" class="bg-brand-green text-white font-display font-bold px-6 py-2.5 rounded-stall shadow">Return to Bazaar Home</a>
+        <a href="{% url 'core:contact' %}" class="border border-neutral-300 text-surface-ink font-display font-bold px-6 py-2.5 rounded-stall">Contact Founder WhatsApp</a>
+    </div>
+</div>
+{% endblock %}

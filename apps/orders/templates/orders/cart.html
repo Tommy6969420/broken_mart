@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Shopping Cart — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+    <div class="flex items-center justify-between flex-wrap gap-3">
+        <h1 class="font-display font-bold text-3xl text-brand-green">Your Bazaar Shopping Cart</h1>
+        <span class="text-xs bg-surface-base border px-3 py-1 rounded-full">Transparent Pricing • VAT included before checkout</span>
+    </div>
+
+    <!-- Multi-Vendor Shipment Notice -->
+    <div class="p-4 bg-state-info/10 border border-state-info/30 rounded-stall text-xs text-state-info flex items-center gap-2">
+        <span>ℹ️</span>
+        <span><strong>Multi-Vendor Notice:</strong> Items from different Hetauda stalls are dispatched via separate local delivery riders to ensure 2-4 hour speed from each shop. Transparent fees shown below.</span>
+    </div>
+
+    {% if is_empty %}
+    <div class="bg-white p-10 rounded-stall border text-center space-y-3">
+        <div class="text-5xl">🛒</div>
+        <h2 class="font-display font-bold text-xl">Your cart is empty</h2>
+        <p class="text-sm text-neutral-600">Browse verified Hetauda vendors — 2-4hr delivery.</p>
+        <a href="{% url 'catalog:product_list' %}" class="inline-block bg-brand-marigold text-surface-ink font-display font-bold px-5 py-2 rounded-stall">Start Shopping →</a>
+    </div>
+    {% else %}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Cart Items Grouped by Vendor -->
+        <div class="lg:col-span-2 space-y-5" id="cart-items-container">
+            {% regroup cart_items by product.vendor as vendor_groups %}
+            {% for vendor_group in vendor_groups %}
+            <div class="bg-white p-5 rounded-stall border border-neutral-200 shadow-sm space-y-4">
+                <div class="flex justify-between items-center border-b pb-3 flex-wrap gap-2">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <a href="{% url 'catalog:vendor_storefront' slug=vendor_group.grouper.shop_slug %}" class="font-display font-bold text-base text-surface-ink hover:text-brand-indigo">{{ vendor_group.grouper.shop_name }}</a>
+                        {% if vendor_group.grouper.is_verified %}
+                        <span class="bg-brand-indigo text-white text-[10px] px-2 py-0.5 stall-flag">✓ Verified</span>
+                        {% endif %}
+                        <span class="bg-surface-base border text-[10px] px-2 py-0.5 rounded-full">Ward #{{ vendor_group.grouper.shop_ward_number }}</span>
+                        <span class="text-[11px] text-neutral-600">{{ vendor_group.grouper.average_rating|floatformat:1 }}★ • {{ vendor_group.grouper.total_sales }} sales</span>
+                    </div>
+                    <span class="text-xs text-state-success font-semibold">⚡ Ships in ~2-3 hrs</span>
+                </div>
+
+                {% for item in vendor_group.list %}
+                <div class="flex items-center justify-between gap-4 py-2 border-b border-neutral-100 last:border-0">
+                    <div class="flex items-center gap-3 flex-grow">
+                        <div class="w-14 h-14 bg-surface-base rounded-stall flex items-center justify-center border overflow-hidden shrink-0">
+                            {% with img=item.product.images.first %}
+                              {% if img %}<img src="{{ img.image.url }}" loading="lazy" alt="{{ item.product.name }}" class="w-full h-full object-cover">{% else %}🛍️{% endif %}
+                            {% endwith %}
+                        </div>
+                        <div class="min-w-0">
+                            <h4 class="font-display font-bold text-sm text-surface-ink truncate">{{ item.product.name }}</h4>
+                            <span class="text-xs text-neutral-500">
+                                {% if item.variant %}{{ item.variant.size }} {% if item.variant.color %}/ {{ item.variant.color }}{% endif %} • {% endif %}
+                                NPR {{ item.variant.effective_price|default:item.product.effective_price }} each
+                            </span>
+                            <!-- transparent per-item tax preview -->
+                            <div class="text-[10px] text-neutral-500">incl. 13% VAT • 2% platform fee shown at checkout</div>
+                        </div>
+                    </div>
+                    <!-- Inline HTMX Quantity Adjuster -->
+                    <div class="flex items-center gap-2 shrink-0" 
+                         hx-target="closest .bg-white" hx-swap="outerHTML">
+                        <button hx-post="{% url 'orders:update_cart_item_ajax' %}" 
+                                hx-vals='{"item_id":"{{ item.id }}","quantity":{{ item.quantity|add:"-1" }}}'
+                                hx-include="[name='csrfmiddlewaretoken']"
+                                class="w-7 h-7 bg-surface-base border rounded text-xs font-bold hover:border-brand-green">-</button>
+                        <span class="font-bold text-sm tabular-nums w-6 text-center">{{ item.quantity }}</span>
+                        <button hx-post="{% url 'orders:update_cart_item_ajax' %}"
+                                hx-vals='{"item_id":"{{ item.id }}","quantity":{{ item.quantity|add:"1" }}}'
+                                hx-include="[name='csrfmiddlewaretoken']"
+                                class="w-7 h-7 bg-surface-base border rounded text-xs font-bold hover:border-brand-green">+</button>
+                    </div>
+                    <div class="text-right shrink-0 w-24">
+                        {% with unit_price=item.variant.effective_price|default:item.product.effective_price %}
+                        <span class="font-display font-bold text-base text-brand-green tabular-nums">NPR {% widthratio unit_price 1 item.quantity %}</span>
+                        {% endwith %}
+                        <button hx-post="{% url 'orders:remove_cart_item_ajax' item.id %}"
+                                hx-target="#cart-items-container"
+                                hx-confirm="Remove item?"
+                                class="block text-xs text-state-error hover:underline ml-auto">Remove</button>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- vendor return policy mini -->
+                <div class="text-[11px] bg-state-warning/10 border border-brand-marigold/40 rounded p-2 text-neutral-700">
+                    🛡️ <strong>{{ vendor_group.grouper.return_window_days }}-day {{ vendor_group.grouper.get_refund_method_display }}:</strong>
+                    {{ vendor_group.grouper.return_policy_text|truncatechars:140 }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Summary Ledger — Transparent Pricing -->
+        <div class="bg-white p-6 rounded-stall border border-neutral-200 shadow-sm h-fit space-y-4 sticky top-24">
+            <h3 class="font-display font-bold text-lg text-brand-green border-b pb-3">Transparent Order Summary</h3>
+            
+            <!-- Pricing breakdown injected via service if available, else fallback -->
+            <div class="space-y-2 text-sm" id="pricing-breakdown"
+                 hx-get="{% url 'orders:cart' %}" hx-trigger="load delay:100ms" hx-select="#pricing-breakdown" hx-swap="outerHTML">
+                <div class="flex justify-between">
+                    <span class="text-neutral-600">Items Subtotal ({{ item_count }} items)</span>
+                    <span class="font-bold tabular-nums">NPR {{ subtotal|floatformat:2 }}</span>
+                </div>
+
+                <!-- Transparent taxes/fees — Marketplace Improvement -->
+                {% if pricing %}
+                <div class="flex justify-between text-xs text-neutral-600">
+                    <span>VAT 13% (Nepal)</span>
+                    <span class="tabular-nums">NPR {{ pricing.tax_amount|floatformat:2 }}</span>
+                </div>
+                <div class="flex justify-between text-xs text-neutral-600">
+                    <span>Platform service 2%</span>
+                    <span class="tabular-nums">NPR {{ pricing.platform_fee|floatformat:2 }}</span>
+                </div>
+                <div class="flex justify-between text-xs">
+                    <span>Hyperlocal delivery est.</span>
+                    <span class="tabular-nums font-semibold text-brand-indigo">NPR {{ pricing.shipping_fee|floatformat:0 }}</span>
+                </div>
+                {% if pricing.discount > 0 %}
+                <div class="flex justify-between text-xs text-state-success">
+                    <span>Coupon {{ pricing.coupon }}</span>
+                    <span class="tabular-nums">- NPR {{ pricing.discount|floatformat:2 }}</span>
+                </div>
+                {% endif %}
+                <div class="border-t pt-2 flex justify-between items-baseline">
+                    <span class="font-display font-bold text-base text-surface-ink">Total Payable</span>
+                    <span class="font-display font-bold text-2xl text-brand-green tabular-nums">NPR {{ pricing.total_payable|floatformat:2 }}</span>
+                </div>
+                <p class="text-[10px] text-neutral-500">Full amount incl. taxes & fees — no surprises at checkout.</p>
+                {% else %}
+                <!-- fallback if pricing context not passed -->
+                <div class="flex justify-between text-xs text-neutral-600">
+                    <span>VAT 13% est.</span>
+                    <span class="tabular-nums">~ NPR {{ subtotal|floatformat:0|add:"0"|stringformat:"s" }}</span>
+                </div>
+                <div class="flex justify-between text-xs text-neutral-600">
+                    <span>Delivery (Ward-based)</span>
+                    <span class="tabular-nums">NPR 60-120</span>
+                </div>
+                <div class="border-t pt-3 flex justify-between items-baseline">
+                    <span class="font-display font-bold text-base text-surface-ink">Total Estimate</span>
+                    <span class="font-display font-bold text-2xl text-brand-green tabular-nums">NPR {{ subtotal|floatformat:0 }}</span>
+                </div>
+                <p class="text-[10px] text-neutral-500">Exact taxes & shipping calculated at 2-step checkout.</p>
+                {% endif %}
+            </div>
+
+            <a href="{% url 'orders:checkout' %}" class="block text-center w-full bg-brand-marigold text-surface-ink font-display font-bold text-lg py-3 rounded-stall hover:brightness-105 transition shadow-md">
+                Proceed to 2-Step Checkout →
+            </a>
+            <div class="text-[11px] text-neutral-500 text-center space-y-1">
+                <div>✓ Transparent pricing • ✓ VAT invoice • ✓ COD / eSewa / Khalti</div>
+                <div>✓ 2-step checkout (address → pay) • ✓ 2-4hr Hetauda delivery</div>
+            </div>
+
+            <!-- coupon -->
+            <form hx-post="{% url 'orders:apply_coupon_ajax' %}" hx-target="#coupon-result" class="pt-3 border-t space-y-2">
+                {% csrf_token %}
+                <label class="text-xs font-bold text-neutral-700">Coupon code</label>
+                <div class="flex gap-2">
+                    <input name="code" placeholder="HETAUDA10" class="flex-grow border rounded-stall px-3 py-2 text-sm bg-surface-base">
+                    <button class="bg-brand-indigo text-white px-3 rounded-stall text-xs font-bold">Apply</button>
+                </div>
+                <div id="coupon-result" class="text-xs"></div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

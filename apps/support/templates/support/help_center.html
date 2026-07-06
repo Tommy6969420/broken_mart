@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Help Center & Support Portal — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="space-y-8 max-w-4xl mx-auto">
+    <div class="text-center space-y-2">
+        <h1 class="font-display font-bold text-3xl text-brand-green">How Can We Help You Today?</h1>
+        <p class="text-sm text-neutral-600">Local Hetauda mediator support team available Sun-Fri.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <a href="{% url 'support:complaint_form' %}" class="bg-white p-6 rounded-stall border-2 border-state-warning shadow-sm hover:scale-105 transition text-center space-y-2">
+            <div class="text-3xl">⚖️</div>
+            <h3 class="font-display font-bold text-lg text-surface-ink">File Legal Grievance</h3>
+            <p class="text-xs text-neutral-600">Legally compliant dispute resolution under Act 2081</p>
+        </a>
+        <a href="{% url 'core:faq' %}" class="bg-white p-6 rounded-stall border border-neutral-200 shadow-sm hover:scale-105 transition text-center space-y-2">
+            <div class="text-3xl">❓</div>
+            <h3 class="font-display font-bold text-lg text-surface-ink">Read FAQ</h3>
+            <p class="text-xs text-neutral-600">Returns, speed, and COD policies</p>
+        </a>
+        <a href="{% url 'core:contact' %}" class="bg-white p-6 rounded-stall border border-neutral-200 shadow-sm hover:scale-105 transition text-center space-y-2">
+            <div class="text-3xl">💬</div>
+            <h3 class="font-display font-bold text-lg text-surface-ink">WhatsApp Support</h3>
+            <p class="text-xs text-neutral-600">Direct human response</p>
+        </a>
+    </div>
+</div>
+{% endblock %}

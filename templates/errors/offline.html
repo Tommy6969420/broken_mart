@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Offline Mode — Makwanpur Mart PWA{% endblock %}
+{% block content %}
+<div class="max-w-xl mx-auto text-center py-16 px-4 bg-white rounded-stall border border-state-warning shadow-sm my-8">
+    <div class="text-6xl mb-4">📡</div>
+    <h1 class="font-display font-bold text-3xl text-brand-green mb-2">You Are Currently Offline</h1>
+    <p class="text-neutral-600 mb-6 leading-relaxed">
+        Your device has lost internet connection in Hetauda. As a Progressive Web App (PWA), Makwanpur Mart allows you to browse previously cached product catalog pages and your recent order history.
+    </p>
+    <div class="p-4 bg-surface-base rounded-stall text-left mb-6 text-sm">
+        <strong class="block font-display text-brand-green mb-1">Available Offline Features:</strong>
+        <ul class="list-disc list-inside space-y-1 text-neutral-700">
+            <li>View recently browsed verified vendor storefronts</li>
+            <li>Check cached delivery addresses in your profile</li>
+            <li>Review offline help center guidelines</li>
+        </ul>
+    </div>
+    <button onclick="window.location.reload()" class="bg-brand-marigold text-surface-ink font-display font-bold px-8 py-3 rounded-stall shadow hover:brightness-105 transition">
+        Check Connection &amp; Reconnect
+    </button>
+</div>
+{% endblock %}

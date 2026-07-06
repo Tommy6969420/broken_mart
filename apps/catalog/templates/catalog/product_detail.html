@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ product.name }} — Makwanpur Mart{% endblock %}
+
+{% block content %}
+<div class="space-y-8" x-data="{ selectedVariant: null, qty: 1 }">
+    <!-- Breadcrumb -->
+    <nav class="text-xs text-neutral-500 flex items-center gap-2 flex-wrap">
+        <a href="{% url 'core:home' %}" class="hover:underline">Bazaar Home</a> <span>/</span>
+        {% if product.category.parent %}
+        <a href="{% url 'catalog:category_detail' slug=product.category.parent.slug %}" class="hover:underline">{{ product.category.parent.name }}</a> <span>/</span>
+        {% endif %}
+        <a href="{% url 'catalog:category_detail' slug=product.category.slug %}" class="hover:underline">{{ product.category.name }}</a> <span>/</span>
+        <span class="text-surface-ink font-semibold">{{ product.name }}</span>
+        {% if product.moderation_status == 'approved' %}
+        <span class="ml-2 text-[10px] bg-state-success/10 text-state-success px-2 py-0.5 rounded-full font-bold">✓ Moderation Approved</span>
+        {% endif %}
+    </nav>
+
+    <!-- Main Product Section -->
+    <div class="bg-white rounded-stall border border-neutral-200 p-6 sm:p-8 shadow-sm grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Image Gallery Area — Performance: lazy-loaded -->
+        <div class="space-y-4">
+            <div class="bg-surface-base rounded-stall h-80 sm:h-96 flex items-center justify-center border border-neutral-200 relative overflow-hidden">
+                {% if primary_image %}
+                    <img src="{{ primary_image.image.url }}" alt="{{ product.name }}" loading="lazy" class="w-full h-full object-cover rounded-stall">
+                {% else %}
+                    <span class="text-7xl">🛍️</span>
+                {% endif %}
+                <!-- Trust badges overlay -->
+                <div class="absolute top-4 left-4 flex flex-col gap-1">
+                    {% if product.vendor.is_verified %}
+                    <span class="bg-brand-indigo text-white font-display font-bold text-xs px-3 py-1 stall-flag shadow-sm">✓ Verified Vendor</span>
+                    {% endif %}
+                    {% if product.vendor.is_trusted_seller %}
+                    <span class="bg-state-success text-white font-display font-bold text-[11px] px-3 py-1 rounded-full shadow-sm">★ Trusted Seller</span>
+                    {% endif %}
+                    {% if product.discounted_price %}
+                    <span class="bg-brand-marigold text-surface-ink font-display font-bold text-xs px-3 py-1 rounded-stall shadow-sm">Save NPR {{ product.pricing_breakdown.savings|floatformat:0 }}</span>
+                    {% endif %}
+                </div>
+                <span class="absolute bottom-3 right-3 text-[10px] bg-black/60 text-white px-2 py-1 rounded">Auto-moderated • Score: {{ product.auto_flag_score }}/100</span>
+            </div>
+            <div class="grid grid-cols-4 gap-2">
+                {% for img in product.images.all|slice:":4" %}
+                <div class="bg-surface-base h-20 rounded-stall border {% if img.is_primary %}border-2 border-brand-green{% else %}border-neutral-200 opacity-80{% endif %} overflow-hidden cursor-pointer">
+                    <img src="{{ img.image.url }}" alt="{{ product.name }} {{ forloop.counter }}" loading="lazy" class="w-full h-full object-cover">
+                </div>
+                {% empty %}
+                <div class="bg-surface-base h-20 rounded-stall border-2 border-brand-green flex items-center justify-center text-2xl">🛍️</div>
+                <div class="bg-surface-base h-20 rounded-stall border border-neutral-200 flex items-center justify-center text-xl opacity-70">📷</div>
+                <div class="bg-surface-base h-20 rounded-stall border border-neutral-200 flex items-center justify-center text-xl opacity-70">📷</div>
+                <div class="bg-surface-base h-20 rounded-stall border border-neutral-200 flex items-center justify-center text-xl opacity-70">📷</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Details & Buying Elements -->
+        <div class="space-y-5 flex flex-col justify-between">
+            <div class="space-y-4">
+                <!-- DYNAMIC VERIFIED SELLER BADGE — Trust & Transparency -->
+                {% include "includes/stall_badge.html" with vendor=product.vendor %}
+
+                <div>
+                    <h1 class="font-display font-bold text-2xl sm:text-3xl text-surface-ink">{{ product.name }}</h1>
+                    <div class="flex items-center gap-3 mt-2 text-xs">
+                        <div class="flex items-center gap-1">
+                            <span class="text-brand-marigold font-bold">
+                                {% for i in product.vendor.seller_rating_stars.full %}★{% endfor %}{% if product.vendor.seller_rating_stars.half %}½{% endif %}{% for i in product.vendor.seller_rating_stars.empty %}☆{% endfor %}
+                            </span>
+                            <span class="font-bold text-surface-ink">{{ product.vendor.average_rating|floatformat:1 }}/5</span>
+                        </div>
+                        <span class="text-neutral-500">•</span>
+                        <span class="text-neutral-600">{{ product.vendor.total_reviews_count }} seller reviews</span>
+                        <span class="text-neutral-500">•</span>
+                        <span class="text-state-success font-semibold">{{ product.vendor.total_sales }} sold</span>
+                        {% if product.vendor.trust_score %}
+                        <span class="text-neutral-500">•</span>
+                        <span class="bg-state-info/10 text-state-info px-2 py-0.5 rounded-full font-bold">Trust {{ product.vendor.trust_score }}/100</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Transparent Pricing Breakdown -->
+                {% with pricing=product.pricing_breakdown %}
+                <div class="py-4 border-y border-neutral-200 space-y-3">
+                    <div class="flex flex-wrap items-baseline justify-between gap-3">
+                        <div class="flex items-baseline gap-3">
+                            <span class="font-display font-bold text-3xl text-brand-green tabular-nums">NPR {{ pricing.base_price|floatformat:0 }}</span>
+                            {% if product.discounted_price %}
+                            <span class="text-sm text-neutral-400 line-through tabular-nums">NPR {{ product.price }}</span>
+                            <span class="text-xs bg-state-success/15 text-state-success font-bold px-2 py-0.5 rounded">Save {{ pricing.savings|floatformat:0 }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="flex items-center gap-1.5 text-xs font-bold {% if details.is_available %}text-state-success bg-state-success/10{% else %}text-state-error bg-state-error/10{% endif %} px-3 py-1 rounded-full">
+                            <span class="w-2 h-2 rounded-full {% if details.is_available %}bg-state-success animate-pulse{% else %}bg-state-error{% endif %}"></span>
+                            <span>{% if details.is_available %}In Stock — {{ details.total_stock }} left{% else %}Out of Stock{% endif %}</span>
+                        </div>
+                    </div>
+
+                    <!-- Full Payable Amount — Transparent Pricing Improvement -->
+                    <div class="bg-surface-base border border-neutral-200 rounded-stall p-3 text-xs space-y-1.5">
+                        <div class="font-display font-bold text-[13px] text-brand-green mb-1">Transparent Hetauda Pricing — Full Payable Before Checkout</div>
+                        <div class="flex justify-between"><span>Product price</span><span class="tabular-nums font-semibold">NPR {{ pricing.base_price|floatformat:2 }}</span></div>
+                        <div class="flex justify-between text-neutral-600"><span>VAT ({{ pricing.tax_rate|floatformat:0 }}% Nepal)</span><span class="tabular-nums">+ NPR {{ pricing.tax_amount|floatformat:2 }}</span></div>
+                        <div class="flex justify-between text-neutral-600"><span>Platform service ({{ pricing.platform_fee_rate|floatformat:0 }}%)</span><span class="tabular-nums">+ NPR {{ pricing.platform_fee|floatformat:2 }}</span></div>
+                        <div class="flex justify-between text-neutral-600"><span>Hyperlocal shipping est.</span><span class="tabular-nums">+ NPR {{ pricing.shipping_estimate|floatformat:0 }}</span></div>
+                        <div class="flex justify-between border-t pt-1.5 font-display font-bold text-[15px] text-brand-green"><span>Total Payable</span><span class="tabular-nums">NPR {{ pricing.total_payable|floatformat:2 }}</span></div>
+                        <p class="text-[10px] text-neutral-500">No hidden fees. Taxes & delivery shown upfront. COD / eSewa / Khalti accepted.</p>
+                    </div>
+                </div>
+                {% endwith %}
+
+                <!-- Hyperlocal Delivery SLA -->
+                <div class="p-3 bg-brand-green/5 border border-brand-green/20 rounded-stall flex items-center gap-3 text-xs">
+                    <span class="text-xl">🛵</span>
+                    <div>
+                        <strong class="text-brand-green block font-display text-sm">Hyperlocal Delivery Promise</strong>
+                        Order now for doorstep delivery across Hetauda Wards 1-10 within <strong>2 to 4 hours today</strong>. Ward {{ product.vendor.shop_ward_number }} dispatch.
+                    </div>
+                </div>
+
+                <!-- Variants -->
+                {% if product.variants.all %}
+                <div class="space-y-2">
+                    <label class="block text-xs font-bold text-neutral-700 uppercase">Select Variant *</label>
+                    <div class="flex flex-wrap gap-2">
+                        {% for variant in product.variants.all %}
+                        <button type="button" @click="selectedVariant = {{ variant.id }}"
+                                :class="selectedVariant === {{ variant.id }} ? 'border-brand-green bg-brand-green text-white' : 'border-neutral-300 bg-surface-base'"
+                                class="px-4 py-2 border rounded-stall text-sm font-display font-medium transition">
+                            {{ variant.size }} {% if variant.color %}/ {{ variant.color }}{% endif %}
+                            <span class="text-[11px] opacity-80 block">NPR {{ variant.effective_price }} • {{ variant.stock_quantity }} left</span>
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- RETURN / REFUND POLICY — Shown on EVERY product page (Trust & Transparency) -->
+                <div class="p-4 bg-state-warning/10 border-2 border-brand-marigold rounded-stall space-y-2">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 font-display font-bold text-sm text-surface-ink">
+                            <span>🛡️</span> Return & Refund Policy — {{ product.vendor.shop_name }}
+                        </div>
+                        {% if product.vendor.accepts_returns %}
+                        <span class="text-[10px] bg-state-success text-white px-2 py-0.5 rounded-full font-bold">Returns Accepted</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-xs text-neutral-800 leading-relaxed">
+                        <strong>{{ product.vendor.return_window_days }}-Day {{ product.vendor.get_refund_method_display }}:</strong>
+                        {{ product.vendor.return_policy_text }}
+                    </p>
+                    <div class="flex gap-3 text-[11px] text-neutral-700 pt-1 border-t border-brand-marigold/30">
+                        <span>✓ {{ product.vendor.return_window_days }}-day window</span>
+                        <span>✓ Doorstep pickup</span>
+                        <span>✓ {{ product.vendor.get_refund_method_display }}</span>
+                        <a href="{% url 'core:return_policy' %}" class="text-brand-indigo font-bold hover:underline ml-auto">Full platform policy →</a>
+                    </div>
+                </div>
+
+                <!-- Seller Ratings Snapshot -->
+                <div class="p-3 bg-surface-base border rounded-stall text-xs">
+                    <div class="font-display font-bold text-sm mb-2 text-brand-indigo">Seller Performance — {{ product.vendor.shop_name }}</div>
+                    <div class="grid grid-cols-3 gap-3 text-center">
+                        <div><div class="font-display font-bold text-lg text-brand-green">{{ product.vendor.average_rating|floatformat:1 }}★</div><div class="text-neutral-600">Seller Rating</div></div>
+                        <div><div class="font-display font-bold text-lg text-surface-ink">{{ product.vendor.total_sales }}</div><div class="text-neutral-600">Orders Fulfilled</div></div>
+                        <div><div class="font-display font-bold text-lg text-state-success">{{ product.vendor.trust_score }}%</div><div class="text-neutral-600">Trust Score</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add to Cart CTA — streamlined -->
+            <form method="post" action="{% url 'orders:add_to_cart_ajax' %}" hx-post="{% url 'orders:add_to_cart_ajax' %}" hx-target="#cart-toast" hx-swap="innerHTML" class="pt-2 space-y-3 border-t">
+                {% csrf_token %}
+                <input type="hidden" name="product_id" value="{{ product.id }}">
+                <input type="hidden" name="variant_id" :value="selectedVariant">
+                <div class="flex gap-3">
+                    <div class="w-24">
+                        <label class="block text-[10px] font-bold text-neutral-500 uppercase mb-1">Qty</label>
+                        <input type="number" name="quantity" x-model="qty" min="1" max="{{ details.total_stock }}" value="1" class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-3 text-sm font-bold text-center">
+                    </div>
+                    <button type="submit" class="flex-grow bg-brand-marigold text-surface-ink font-display font-bold text-lg py-3 rounded-stall hover:brightness-105 transition shadow-md flex items-center justify-center gap-2">
+                        <span>🛒 Add to Cart — NPR {{ product.effective_price }}</span>
+                    </button>
+                    <button type="button" hx-post="{% url 'catalog:toggle_wishlist_ajax' %}" hx-vals='{"product_id": "{{ product.id }}"}' class="px-4 border rounded-stall text-xl hover:bg-surface-base">♡</button>
+                </div>
+                <div id="cart-toast" class="text-xs"></div>
+                <p class="text-[11px] text-neutral-500 text-center">Secure checkout • 2-step • eSewa / Khalti / COD • VAT invoice included</p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Seller Reviews — Trust & Transparency -->
+    <div class="bg-white rounded-stall border border-neutral-200 p-6 sm:p-8 shadow-sm space-y-5">
+        <div class="flex justify-between items-center border-b pb-4">
+            <h2 class="font-display font-bold text-xl text-brand-green">Seller Reviews — Verified Purchases</h2>
+            <a href="{% url 'catalog:review_form' product_slug=product.slug %}" class="text-xs font-bold text-brand-indigo hover:underline">Leave Seller Review</a>
+        </div>
+
+        <!-- Product Reviews -->
+        <div class="space-y-3">
+            <h3 class="font-display font-semibold text-base">Product Reviews ({{ review_stats.total_reviews|default:0 }})</h3>
+            {% for review in reviews %}
+            <div class="p-4 bg-surface-base rounded-stall border space-y-1">
+                <div class="flex justify-between items-center text-xs">
+                    <strong class="text-surface-ink">Verified Buyer</strong>
+                    <span class="text-brand-marigold font-bold">{% for i in "12345"|make_list %}{% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}{% endfor %} ({{ review.rating }}/5)</span>
+                </div>
+                <p class="text-neutral-700 text-sm">{{ review.comment|default:"Great product, fast Hetauda delivery!" }}</p>
+                {% if review.vendor_response %}
+                <div class="mt-2 p-2 bg-white border-l-2 border-brand-indigo text-[12px]"><strong class="text-brand-indigo">{{ product.vendor.shop_name }} replied:</strong> {{ review.vendor_response }}</div>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="p-4 bg-surface-base rounded-stall border text-sm text-neutral-600">No product reviews yet — be the first verified reviewer in Hetauda!</div>
+            {% endfor %}
+        </div>
+
+        <!-- Seller-level review summary -->
+        <div class="pt-4 border-t text-xs grid sm:grid-cols-2 gap-4">
+            <div class="bg-brand-indigo/5 p-3 rounded-stall">
+                <div class="font-display font-bold text-brand-indigo mb-1">Why shop with {{ product.vendor.shop_name }}?</div>
+                <ul class="space-y-1 text-neutral-700">
+                    <li>✓ {% if product.vendor.is_verified %}Verified DOCSCP seller{% else %}Pending verification{% endif %}</li>
+                    <li>✓ {{ product.vendor.total_sales }} successful Hetauda deliveries</li>
+                    <li>✓ {{ product.vendor.average_rating|floatformat:1 }}★ average seller rating</li>
+                    <li>✓ {{ product.vendor.return_window_days }}-day transparent returns</li>
+                    <li>✓ Ward {{ product.vendor.shop_ward_number }} local pickup available</li>
+                </ul>
+            </div>
+            <div class="bg-state-success/5 p-3 rounded-stall">
+                <div class="font-display font-bold text-state-success mb-1">Buyer Protection</div>
+                <ul class="space-y-1 text-neutral-700">
+                    <li>• Makwanpur Mart Escrow — pay on delivery</li>
+                    <li>• Grievance Officer — E-Commerce Act 2081 compliant</li>
+                    <li>• 2-4hr hyperlocal SLA tracked</li>
+                    <li>• Live chat support — bottom-right FAB</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quality Control / Moderation transparency -->
+    <div class="bg-white rounded-stall border border-neutral-200 p-4 text-[11px] text-neutral-600 flex flex-wrap gap-4 justify-between">
+        <span>Listing ID: {{ product.sku|default:product.id }} • Moderation: <strong class="text-state-success">{{ product.get_moderation_status_display }}</strong></span>
+        <span>Auto-flag score: {{ product.auto_flag_score }}/100 • {% if product.flagged_reasons %}Flags: {{ product.flagged_reasons|join:", " }}{% else %}Clean{% endif %}</span>
+        <span>Last updated: {{ product.updated_at|date:"M j, Y" }} • Vendor verified: {% if product.vendor.is_verified %}Yes {{ product.vendor.verified_at|date:"Y-m-d"|default:"" }}{% else %}Pending{% endif %}</span>
+    </div>
+</div>
+{% endblock %}

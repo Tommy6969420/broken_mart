@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}File Legal Grievance Complaint — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white p-8 rounded-stall border-2 border-state-warning shadow-sm my-6 space-y-6">
+    <div class="border-b pb-4">
+        <span class="bg-state-warning text-white text-xs font-bold px-2.5 py-0.5 rounded">Act 2081 Requirement</span>
+        <h1 class="font-display font-bold text-2xl text-brand-green mt-1">File Official Grievance Complaint</h1>
+        <p class="text-xs text-neutral-600">Impartial platform mediator dispute record.</p>
+    </div>
+    <form action="{% url 'support:complaint_list' %}" method="post" class="space-y-4 text-sm">
+        <div>
+            <label class="block font-bold mb-1">Related Order Reference *</label>
+            <input type="text" value="#MM-2026-8492" required class="w-full bg-surface-base border rounded-stall p-2">
+        </div>
+        <div>
+            <label class="block font-bold mb-1">Complaint Category *</label>
+            <select class="w-full bg-surface-base border rounded-stall p-2">
+                <option>Vendor refused stated return policy</option>
+                <option>Product quality defective / counterfeit</option>
+                <option>Delivery delayed beyond guarantee</option>
+            </select>
+        </div>
+        <div>
+            <label class="block font-bold mb-1">Detailed Description *</label>
+            <textarea rows="4" required class="w-full bg-surface-base border rounded-stall p-2"></textarea>
+        </div>
+        <button type="submit" class="w-full bg-state-warning text-white font-display font-bold py-3 rounded-stall shadow">Submit Legal Complaint Record</button>
+    </form>
+</div>
+{% endblock %}

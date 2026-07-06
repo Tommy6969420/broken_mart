@@ -1,0 +1,27 @@
+<div class="bg-white rounded-stall shadow-lg border border-neutral-200 py-2 max-h-80 overflow-y-auto">
+    {% if suggestions.products %}
+        <div class="px-4 py-2 text-xs font-semibold text-neutral-500 uppercase">Products</div>
+        {% for product in suggestions.products %}
+            <a href="{% url 'catalog:product_list' %}?q={{ product|urlencode }}" 
+               class="block px-4 py-2 hover:bg-brand-marigold/10 transition text-sm">
+                {{ product }}
+            </a>
+        {% endfor %}
+    {% endif %}
+    
+    {% if suggestions.categories %}
+        <div class="px-4 py-2 text-xs font-semibold text-neutral-500 uppercase border-t mt-2">Categories</div>
+        {% for category in suggestions.categories %}
+            <a href="{% url 'catalog:category_detail' slug=category|urlencode %}" 
+               class="block px-4 py-2 hover:bg-brand-marigold/10 transition text-sm">
+                {{ category }}
+            </a>
+        {% endfor %}
+    {% endif %}
+    
+    {% if not suggestions.products and not suggestions.categories %}
+        <div class="px-4 py-4 text-center text-neutral-500 text-sm">
+            No results found
+        </div>
+    {% endif %}
+</div>

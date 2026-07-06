@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Request Return / Replacement [Phase 2] — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-xl mx-auto bg-white p-8 rounded-stall border border-neutral-200 shadow-sm my-6 space-y-6">
+    <h1 class="font-display font-bold text-2xl text-brand-green border-b pb-4">Doorstep Return Request [Phase 2]</h1>
+    <form action="{% url 'orders:order_list' %}" method="post" class="space-y-4 text-sm">
+        <div>
+            <label class="block font-bold mb-1">Issue Description *</label>
+            <textarea rows="3" required placeholder="Item size did not fit or fabric defective..." class="w-full bg-surface-base border rounded-stall p-2"></textarea>
+        </div>
+        <div>
+            <label class="block font-bold mb-1">Upload Defect Photo Evidence *</label>
+            <input type="file" required class="text-xs">
+        </div>
+        <button type="submit" class="w-full bg-brand-green text-white font-display font-bold py-3 rounded-stall shadow">Submit Return Claim</button>
+    </form>
+</div>
+{% endblock %}

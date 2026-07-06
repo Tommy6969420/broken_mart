@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Order #MM-2026-8492 Timeline — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8">
+    <div class="bg-white p-6 rounded-stall border border-neutral-200 shadow-sm flex justify-between items-center">
+        <div>
+            <h1 class="font-display font-bold text-2xl text-brand-green">Order Details #MM-2026-8492</h1>
+            <p class="text-xs text-neutral-500">Placed on July 04, 2026 &bull; Total Paid: NPR 1,950 (COD)</p>
+        </div>
+        <span class="bg-state-warning text-white font-bold text-xs px-3 py-1.5 rounded-full">Out for Delivery</span>
+    </div>
+
+    <!-- CRITICAL UNEXCLUDEABLE ELEMENT: GRANULAR ORDER STATUS TIMELINE WITH TIMESTAMPS -->
+    <div class="bg-white p-8 rounded-stall border-2 border-brand-green shadow-sm space-y-6">
+        <div class="border-b pb-3">
+            <span class="bg-brand-marigold text-surface-ink font-display font-bold text-xs px-2.5 py-0.5 stall-flag uppercase">Core Differentiator</span>
+            <h2 class="font-display font-bold text-2xl text-brand-green mt-1">Granular Hyperlocal Fulfillment Timeline</h2>
+            <p class="text-xs text-neutral-600">Unlike generic Megacity tracking, every local handoff in Hetauda is timestamped directly below.</p>
+        </div>
+
+        <div class="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-brand-green/30">
+            <!-- Timeline Step 1: Placed -->
+            <div class="relative">
+                <span class="absolute -left-6 top-1 w-4 h-4 rounded-full bg-state-success border-2 border-white shadow"></span>
+                <div class="flex justify-between items-baseline">
+                    <strong class="font-display font-bold text-base text-surface-ink">1. Order Placed by Customer</strong>
+                    <span class="text-xs text-neutral-500 tabular-nums">July 04, 2026 — 14:15:02</span>
+                </div>
+                <p class="text-xs text-neutral-600">Order recorded and Sparrow SMS notification dispatched to vendor.</p>
+            </div>
+
+            <!-- Timeline Step 2: Confirmed -->
+            <div class="relative">
+                <span class="absolute -left-6 top-1 w-4 h-4 rounded-full bg-state-success border-2 border-white shadow"></span>
+                <div class="flex justify-between items-baseline">
+                    <strong class="font-display font-bold text-base text-surface-ink">2. Confirmed by Vendor (Shrestha Cloth Store)</strong>
+                    <span class="text-xs text-neutral-500 tabular-nums">July 04, 2026 — 14:22:18</span>
+                </div>
+                <p class="text-xs text-neutral-600">Vendor verified item availability in Ward 4 store.</p>
+            </div>
+
+            <!-- Timeline Step 3: Preparing -->
+            <div class="relative">
+                <span class="absolute -left-6 top-1 w-4 h-4 rounded-full bg-state-success border-2 border-white shadow"></span>
+                <div class="flex justify-between items-baseline">
+                    <strong class="font-display font-bold text-base text-surface-ink">3. Item Packaged &amp; Rider Assigned</strong>
+                    <span class="text-xs text-neutral-500 tabular-nums">July 04, 2026 — 14:48:40</span>
+                </div>
+                <p class="text-xs text-neutral-600">Assigned local rider Bikash Thapa (Rider #12).</p>
+            </div>
+
+            <!-- Timeline Step 4: Out for Delivery (Active) -->
+            <div class="relative">
+                <span class="absolute -left-6 top-1 w-4 h-4 rounded-full bg-state-warning animate-pulse border-2 border-white shadow"></span>
+                <div class="flex justify-between items-baseline">
+                    <strong class="font-display font-bold text-base text-state-warning">4. Out for Delivery in Hetauda Ward #4</strong>
+                    <span class="text-xs text-brand-marigold font-bold tabular-nums">July 04, 2026 — 15:10:05</span>
+                </div>
+                <p class="text-xs text-neutral-800 font-medium">Rider en route to your landmark opposite Pashupati Temple Gate.</p>
+            </div>
+
+            <!-- Timeline Step 5: Delivered -->
+            <div class="relative opacity-40">
+                <span class="absolute -left-6 top-1 w-4 h-4 rounded-full bg-neutral-300 border-2 border-white"></span>
+                <div class="flex justify-between items-baseline">
+                    <strong class="font-display font-bold text-base text-neutral-500">5. Package Delivered &amp; COD Collected</strong>
+                    <span class="text-xs text-neutral-400">Pending arrival</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

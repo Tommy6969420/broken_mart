@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Rider KYC — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+    <div class="bg-white p-6 rounded-stall border border-neutral-200 shadow-sm">
+        <h1 class="font-display font-bold text-2xl text-brand-green">Rider KYC Verification — Hetauda</h1>
+        <p class="text-xs text-neutral-600 mt-1">Upload Nepal citizenship, license, vehicle bluebook — required before accepting delivery tasks (E-Commerce Act 2081 rider KYC).</p>
+        <div class="mt-3 flex gap-2 text-[11px] flex-wrap">
+            <span class="px-2 py-1 rounded-full border {% if rider.kyc_status == 'verified' %}bg-state-success text-white border-state-success{% elif rider.kyc_status == 'pending' or rider.kyc_status == 'in_review' %}bg-state-warning text-white border-state-warning{% else %}bg-surface-base border-neutral-300{% endif %}">
+                KYC: {{ rider.get_kyc_status_display }}
+            </span>
+            <span class="px-2 py-1 rounded-full border {% if rider.can_accept_deliveries %}bg-state-success/10 text-state-success border-state-success/30{% else %}bg-state-error/10 text-state-error border-state-error/30{% endif %}">
+                {% if rider.can_accept_deliveries %}✓ Can accept deliveries{% else %}✗ KYC required to go online{% endif %}
+            </span>
+            <span class="px-2 py-1 rounded-full bg-surface-base border">Trust: {{ rider.average_delivery_rating|floatformat:1 }}★ ({{ rider.total_ratings }} ratings)</span>
+        </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="bg-white p-6 rounded-stall border border-neutral-200 shadow-sm space-y-6">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <!-- Vehicle -->
+        <div class="grid sm:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-xs font-bold uppercase mb-1">Vehicle Type *</label>
+                {{ form.vehicle_type }}
+            </div>
+            <div>
+                <label class="block text-xs font-bold uppercase mb-1">Availability</label>
+                <label class="flex items-center gap-2 bg-surface-base border px-3 py-2 rounded-stall text-sm">
+                    {{ form.is_available }} <span>Available for deliveries</span>
+                </label>
+                <p class="text-[10px] text-neutral-500">Auto-disabled if KYC not verified</p>
+            </div>
+        </div>
+
+        <!-- KYC Section -->
+        <div class="border-t pt-4 space-y-4">
+            <h3 class="font-display font-bold text-brand-indigo">🇳🇵 KYC Documents — required</h3>
+            <div class="grid sm:grid-cols-2 gap-4 text-sm">
+                <div>{{ form.citizenship_number.label_tag }}{{ form.citizenship_number }}{{ form.citizenship_number.errors }}</div>
+                <div>{{ form.license_number.label_tag }}{{ form.license_number }}{{ form.license_number.errors }}</div>
+                <div>{{ form.citizenship_front_image.label_tag }}{{ form.citizenship_front_image }}</div>
+                <div>{{ form.citizenship_back_image.label_tag }}{{ form.citizenship_back_image }}</div>
+                <div>{{ form.license_image.label_tag }}{{ form.license_image }}</div>
+                <div>{{ form.vehicle_bluebook_image.label_tag }}{{ form.vehicle_bluebook_image }}</div>
+                <div>{{ form.vehicle_registration_number.label_tag }}{{ form.vehicle_registration_number }}</div>
+                <div>{{ form.selfie_with_id.label_tag }}{{ form.selfie_with_id }}<p class="text-[10px] text-neutral-500">{{ form.selfie_with_id.help_text }}</p></div>
+            </div>
+        </div>
+
+        <!-- Emergency / location -->
+        <div class="border-t pt-4 grid sm:grid-cols-2 gap-4 text-sm">
+            <div>{{ form.emergency_contact_name.label_tag }}{{ form.emergency_contact_name }}</div>
+            <div>{{ form.emergency_contact_phone.label_tag }}{{ form.emergency_contact_phone }}</div>
+            <div class="sm:col-span-2">{{ form.permanent_address.label_tag }}{{ form.permanent_address }}</div>
+            <div>{{ form.current_municipality.label_tag }}{{ form.current_municipality }}</div>
+            <div>{{ form.current_ward.label_tag }}{{ form.current_ward }}</div>
+        </div>
+
+        <!-- Map — pinpoint rider base location Makwanpur -->
+        <div class="border-t pt-4">
+            <label class="block text-xs font-bold uppercase mb-2">📍 Rider Base Location — Makwanpur District</label>
+            {% include "includes/makwanpur_map.html" with lat=rider.user.addresses.first.latitude|default:"27.4287" lon=rider.user.addresses.first.longitude|default:"85.0320" zoom=13 height="300px" map_id="riderkyc" %}
+            <p class="text-[10px] text-neutral-500 mt-1">Pin your usual operating base — helps dispatch assign nearest Ward orders (2-4hr SLA).</p>
+        </div>
+
+        {% if rider.kyc_rejection_reason %}
+        <div class="bg-state-error/10 border border-state-error text-state-error p-3 rounded-stall text-xs">
+            <strong>KYC Rejected:</strong> {{ rider.kyc_rejection_reason }}
+            <br>Re-upload corrected documents to resubmit.
+        </div>
+        {% endif %}
+
+        <div class="flex justify-end gap-3 border-t pt-4">
+            <a href="{% url 'accounts:rider_dashboard' %}" class="px-5 py-2 border rounded-stall text-sm">Cancel</a>
+            <button class="bg-brand-green text-white font-display font-bold px-6 py-2.5 rounded-stall shadow hover:brightness-110">
+                Save KYC & Profile
+            </button>
+        </div>
+        <p class="text-[11px] text-neutral-500 text-center">Uploading KYC docs sets status → <strong>Pending Verification</strong> — admin reviews within 24h (E-Commerce Act 2081). You can ONLY accept delivery tasks after KYC Verified.</p>
+    </form>
+</div>
+{% endblock %}

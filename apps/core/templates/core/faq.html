@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Frequently Asked Questions — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+    <div class="text-center">
+        <h1 class="font-display font-bold text-3xl text-brand-green">Frequently Asked Questions</h1>
+        <p class="text-sm text-neutral-600 mt-1">Everything you need to know about shopping locally in Makwanpur.</p>
+    </div>
+
+    <div class="bg-white rounded-stall border border-neutral-200 divide-y divide-neutral-200 shadow-sm" x-data="{ active: 1 }">
+        <!-- FAQ Item 1 -->
+        <div class="p-5">
+            <button @click="active = active === 1 ? 0 : 1" class="w-full flex justify-between items-center text-left font-display font-bold text-lg text-surface-ink">
+                <span>What makes Makwanpur Mart faster than Daraz?</span>
+                <span x-text="active === 1 ? '−' : '+'" class="text-xl text-brand-marigold font-bold"></span>
+            </button>
+            <div x-show="active === 1" x-collapse class="mt-3 text-sm text-neutral-600 leading-relaxed">
+                National platforms dispatch items from central warehouses in Kathmandu or outside provinces, taking 3 to 5 business days. Makwanpur Mart is strictly hyperlocal: all items are stocked by verified vendors right here in Hetauda Wards 1-19. Our local riders deliver within 2 to 4 hours of order confirmation.
+            </div>
+        </div>
+
+        <!-- FAQ Item 2 -->
+        <div class="p-5">
+            <button @click="active = active === 2 ? 0 : 2" class="w-full flex justify-between items-center text-left font-display font-bold text-lg text-surface-ink">
+                <span>How do return and replacement policies work?</span>
+                <span x-text="active === 2 ? '−' : '+'" class="text-xl text-brand-marigold font-bold"></span>
+            </button>
+            <div x-show="active === 2" x-collapse class="mt-3 text-sm text-neutral-600 leading-relaxed space-y-2">
+                <p>Because vendors are independent local shopkeepers, each product displays the exact vendor's return policy right on the product page. If an item arrives damaged or incorrect, you can request an instant replacement at doorstep or initiate a verified dispute via our Grievance Portal.</p>
+            </div>
+        </div>
+
+        <!-- FAQ Item 3 -->
+        <div class="p-5">
+            <button @click="active = active === 3 ? 0 : 3" class="w-full flex justify-between items-center text-left font-display font-bold text-lg text-surface-ink">
+                <span>Why is Cash on Delivery (COD) as prominent as digital payments?</span>
+                <span x-text="active === 3 ? '−' : '+'" class="text-xl text-brand-marigold font-bold"></span>
+            </button>
+            <div x-show="active === 3" x-collapse class="mt-3 text-sm text-neutral-600 leading-relaxed">
+                We believe building digital payment trust takes time. We proudly offer equal choice at checkout: pay securely via NRB-approved gateways (eSewa / Khalti) or pay Cash on Delivery (COD) once you inspect your package from the delivery rider.
+            </div>
+        </div>
+
+        <!-- FAQ Item 4 -->
+        <div class="p-5">
+            <button @click="active = active === 4 ? 0 : 4" class="w-full flex justify-between items-center text-left font-display font-bold text-lg text-surface-ink">
+                <span>How can local shopkeepers join as vendors for free?</span>
+                <span x-text="active === 4 ? '−' : '+'" class="text-xl text-brand-marigold font-bold"></span>
+            </button>
+            <div x-show="active === 4" x-collapse class="mt-3 text-sm text-neutral-600 leading-relaxed">
+                Vendor listing is 100% FREE for Year 1! We charge a transparent 5% commission only on successful completed sales. Micro/cottage vendors exempt from individual e-commerce registration can legally operate through our registered DOCSCP platform.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

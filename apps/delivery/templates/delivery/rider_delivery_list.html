@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Rider Delivery Feed [Phase 2] — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <h1 class="font-display font-bold text-3xl text-brand-green">Active Dispatched Drops</h1>
+    <div class="bg-white p-6 rounded-stall border-2 border-brand-marigold shadow-sm flex justify-between items-center">
+        <div>
+            <span class="font-bold text-xs bg-brand-marigold px-2 py-0.5 rounded">Drop #MM-8492</span>
+            <h3 class="font-display font-bold text-lg mt-1">Pickup: Shrestha Cloth Store → Drop: Ward #4</h3>
+        </div>
+        <a href="{% url 'delivery:delivery_detail' delivery_id=1 %}" class="bg-brand-green text-white font-bold px-5 py-2 rounded-stall text-sm shadow">Process Drop</a>
+    </div>
+</div>
+{% endblock %}

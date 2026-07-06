@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}My Profile Hub — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-stall border border-neutral-200 shadow-sm">
+        <div class="flex items-center gap-4">
+            <div class="w-16 h-16 bg-brand-green text-white rounded-full flex items-center justify-center font-display font-bold text-2xl">
+                RS
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="font-display font-bold text-2xl text-surface-ink">Ram Shrestha</h1>
+                    <span class="bg-brand-marigold text-surface-ink text-xs font-bold px-2.5 py-0.5 stall-flag">Verified Shopper</span>
+                </div>
+                <p class="text-xs text-neutral-500 tabular-nums">+977 9845123456 &bull; Preferred Language: English (EN)</p>
+            </div>
+        </div>
+        <a href="{% url 'accounts:profile_edit' %}" class="border border-brand-green text-brand-green font-display font-semibold px-4 py-2 rounded-stall text-sm hover:bg-brand-green/5 transition">
+            Edit Account Settings
+        </a>
+    </div>
+
+    <!-- Quick Links Hub (Not an island!) -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <a href="{% url 'orders:order_list' %}" class="bg-white p-5 rounded-stall border border-neutral-200 hover:border-brand-marigold transition shadow-sm space-y-1">
+            <div class="text-2xl">📦</div>
+            <h3 class="font-display font-bold text-base text-surface-ink">My Orders &amp; Timeline</h3>
+            <p class="text-xs text-neutral-500">Track active Hetauda deliveries and granular timestamps</p>
+        </a>
+        <a href="{% url 'accounts:address_list' %}" class="bg-white p-5 rounded-stall border border-neutral-200 hover:border-brand-marigold transition shadow-sm space-y-1">
+            <div class="text-2xl">📍</div>
+            <h3 class="font-display font-bold text-base text-surface-ink">Saved Delivery Addresses</h3>
+            <p class="text-xs text-neutral-500">Manage Hetauda Ward 1-19 locations &amp; mandatory landmarks</p>
+        </a>
+        <a href="{% url 'support:complaint_list' %}" class="bg-white p-5 rounded-stall border border-neutral-200 hover:border-brand-marigold transition shadow-sm space-y-1">
+            <div class="text-2xl">⚖️</div>
+            <h3 class="font-display font-bold text-base text-surface-ink">Grievances &amp; Complaints</h3>
+            <p class="text-xs text-neutral-500">View resolution notes on active or resolved disputes</p>
+        </a>
+    </div>
+
+    <!-- Recent Orders Preview -->
+    <div class="bg-white p-6 rounded-stall border border-neutral-200 shadow-sm space-y-4">
+        <div class="flex justify-between items-center border-b pb-3">
+            <h2 class="font-display font-bold text-lg text-brand-green">Recent Order History</h2>
+            <a href="{% url 'orders:order_list' %}" class="text-xs font-bold text-brand-indigo hover:underline">View All Orders →</a>
+        </div>
+        <div class="space-y-3">
+            <div class="p-4 bg-surface-base rounded-stall flex flex-col sm:flex-row justify-between sm:items-center gap-2 border border-neutral-200">
+                <div>
+                    <span class="font-display font-bold text-sm text-surface-ink">#MM-2026-8492</span>
+                    <span class="text-xs text-neutral-500 ml-2 tabular-nums">July 04, 2026</span>
+                    <div class="text-xs text-neutral-700 mt-0.5">2 items from <strong class="text-brand-indigo">Shrestha Cloth Store</strong></div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="bg-state-success/15 text-state-success text-xs font-bold px-3 py-1 rounded-full">Delivered</span>
+                    <a href="{% url 'orders:order_detail' order_id=8492 %}" class="bg-brand-green text-white px-3 py-1.5 rounded-stall text-xs font-display font-semibold">View Timeline</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

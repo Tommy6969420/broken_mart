@@ -1,0 +1,101 @@
+<header class="bg-brand-green text-white sticky top-0 z-40 shadow-md">
+    <!-- Top Bar: Location & Language Toggle -->
+    <div class="border-b border-neutral-700/40 text-small py-1 px-4 sm:px-6 lg:px-8 bg-black/10">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <span class="inline-block w-2 h-2 rounded-full bg-brand-marigold animate-pulse"></span>
+                <span>Hyperlocal Hetauda Delivery &bull; Wards 1-19</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <!-- Role Switcher Wireframe Shortcut -->
+                <div class="hidden md:flex items-center gap-2 text-xs text-neutral-300 border-r border-neutral-600 pr-3">
+                    <span>View as:</span>
+                    <a href="{% url 'core:home' %}" class="hover:text-brand-marigold font-medium underline">Customer</a>
+                    <a href="{% url 'accounts:vendor_dashboard' %}" class="hover:text-brand-marigold font-medium">Vendor</a>
+                    <a href="{% url 'accounts:rider_dashboard' %}" class="hover:text-brand-marigold font-medium">Rider</a>
+                </div>
+                <!-- Language Toggle (EN/NE) -->
+                <div class="flex items-center gap-1 bg-black/20 rounded-stall px-2 py-0.5 text-xs">
+                    <button @click="lang = 'EN'" :class="lang === 'EN' ? 'text-brand-marigold font-bold' : 'text-neutral-300'" class="px-1">EN</button>
+                    <span>/</span>
+                    <button @click="lang = 'NE'" :class="lang === 'NE' ? 'text-brand-marigold font-bold' : 'text-neutral-300'" class="px-1">नेपाली</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Navigation Bar -->
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
+        <!-- Brand Logo -->
+        <a href="{% url 'core:home' %}" class="flex items-center gap-2 group shrink-0">
+            <div class="w-10 h-10 bg-brand-marigold text-surface-ink rounded-stall flex items-center justify-center font-display font-bold text-xl shadow-inner group-hover:scale-105 transition">
+                MM
+            </div>
+            <div>
+                <span class="font-display font-bold text-2xl tracking-tight leading-none block text-white">MAKWANPUR MART</span>
+                <span class="text-xs text-brand-marigold block font-medium">Hetauda Local Bazaar</span>
+            </div>
+        </a>
+
+        <!-- Prominent Search Bar Above Fold -->
+        <div class="flex-grow max-w-xl hidden md:block">
+            <form action="{% url 'core:search_results' %}" method="get" class="relative">
+                <input type="text" name="q" placeholder="Search Hetauda shops for Kurta, Beauty, Local Snacks..." 
+                       class="w-full bg-surface-base text-surface-ink pl-4 pr-24 py-2 rounded-stall text-sm border-2 border-transparent focus:border-brand-marigold transition shadow-inner">
+                <button type="submit" class="absolute right-1 top-1 bottom-1 bg-brand-marigold text-surface-ink font-display font-bold px-4 rounded-stall text-xs hover:brightness-105 transition flex items-center gap-1">
+                    <span>Search</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Action Links: Account, Wishlist, Cart -->
+        <div class="flex items-center gap-4 shrink-0">
+            <a href="{% url 'accounts:profile' %}" class="hidden sm:flex flex-col items-end text-right hover:text-brand-marigold transition">
+                <span class="text-xs text-neutral-300">Namaste,</span>
+                <span class="font-display font-semibold text-sm leading-none">My Account</span>
+            </a>
+
+            <a href="{% url 'orders:cart' %}" class="relative bg-brand-marigold text-surface-ink px-3.5 py-2 rounded-stall font-display font-bold text-sm flex items-center gap-2 hover:brightness-105 transition shadow-sm">
+                <span>Cart</span>
+                <span class="bg-surface-ink text-white text-xs px-2 py-0.5 rounded-full tabular-nums">3</span>
+            </a>
+
+            <!-- Mobile Menu Toggle -->
+            <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden p-2 rounded-stall border border-neutral-600 text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path x-show="!mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    <path x-show="mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Category Nav Strip -->
+    <nav class="bg-black/20 border-t border-neutral-700/50 hidden md:block">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center gap-6 text-sm font-medium">
+            <a href="{% url 'catalog:category_list' %}" class="text-brand-marigold font-display font-bold hover:underline">All Stalls &amp; Categories</a>
+            <a href="{% url 'catalog:category_detail' slug='fashion' %}" class="hover:text-brand-marigold transition">Fashion &amp; Clothing [P1]</a>
+            <a href="{% url 'catalog:category_detail' slug='beauty' %}" class="hover:text-brand-marigold transition">Beauty &amp; Cosmetics [P1]</a>
+            <a href="{% url 'catalog:category_detail' slug='food' %}" class="hover:text-brand-marigold transition flex items-center gap-1">
+                <span>Local Food &amp; Snacks</span>
+                <span class="text-[10px] bg-brand-indigo text-white px-1.5 py-0.5 rounded stall-flag">Phase 2</span>
+            </a>
+            <a href="{% url 'accounts:vendor_register' %}" class="ml-auto text-xs bg-brand-indigo text-white px-3 py-1 rounded-stall font-medium hover:brightness-110 transition">
+                🏪 Sell on Makwanpur Mart (Free Yr 1)
+            </a>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Drawer -->
+    <div x-show="mobileMenuOpen" x-cloak class="md:hidden bg-brand-green border-t border-neutral-700 p-4 space-y-4">
+        <form action="{% url 'core:search_results' %}" method="get">
+            <input type="text" name="q" placeholder="Search Hetauda shops..." class="w-full bg-surface-base text-surface-ink px-3 py-2 rounded-stall text-sm">
+        </form>
+        <div class="grid grid-cols-2 gap-2 text-sm font-medium">
+            <a href="{% url 'catalog:category_list' %}" class="p-2 bg-black/20 rounded-stall">Browse Categories</a>
+            <a href="{% url 'accounts:profile' %}" class="p-2 bg-black/20 rounded-stall">My Profile</a>
+            <a href="{% url 'orders:order_list' %}" class="p-2 bg-black/20 rounded-stall">My Orders</a>
+            <a href="{% url 'support:help_center' %}" class="p-2 bg-black/20 rounded-stall">Grievances &amp; Help</a>
+        </div>
+    </div>
+</header>

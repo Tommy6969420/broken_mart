@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Contact Our Hetauda Office — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8">
+    <div class="text-center max-w-2xl mx-auto">
+        <h1 class="font-display font-bold text-3xl text-brand-green">Get in Touch With Local Support</h1>
+        <p class="text-sm text-neutral-600 mt-1">Real human support located right here in Hetauda, Bagmati Province.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Physical Office Coordinates & Details -->
+        <div class="bg-white p-6 rounded-stall border border-neutral-200 shadow-sm space-y-6">
+            <h3 class="font-display font-bold text-xl text-brand-green border-b pb-3">Hetauda Office Coordinates</h3>
+            
+            <div class="space-y-4 text-sm">
+                <div class="flex items-start gap-3">
+                    <span class="text-xl">📍</span>
+                    <div>
+                        <strong class="block font-display text-surface-ink">Physical Presence / Office</strong>
+                        <span class="text-neutral-600">Main Bazaar Road, Near Ward Office #4, Hetauda Sub-Metropolitan City, Makwanpur District, Bagmati Province, Nepal.</span>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <span class="text-xl">📞</span>
+                    <div>
+                        <strong class="block font-display text-surface-ink">Telephone &amp; WhatsApp Business</strong>
+                        <span class="text-neutral-600 tabular-nums">+977 57-520000 / +977 9845000000</span>
+                        <span class="block text-xs text-state-success font-medium mt-0.5">Available Sun-Fri, 9:00 AM – 6:00 PM</span>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <span class="text-xl">✉️</span>
+                    <div>
+                        <strong class="block font-display text-surface-ink">Email Addresses</strong>
+                        <span class="text-neutral-600 block">Support: support@makwanpurmart.com.np</span>
+                        <span class="text-neutral-600 block">Vendor Onboarding: vendors@makwanpurmart.com.np</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 bg-surface-base rounded-stall text-xs border border-neutral-300">
+                <strong class="block text-brand-indigo font-display mb-1">Legal Dispute &amp; DOCSCP Compliance</strong>
+                For formal grievance filing required under the Electronic Commerce Act 2081, please visit our dedicated <a href="{% url 'support:complaint_form' %}" class="underline font-bold text-brand-green">Grievance Portal</a>.
+            </div>
+        </div>
+
+        <!-- Direct Contact Form -->
+        <div class="bg-white p-6 rounded-stall border border-neutral-200 shadow-sm space-y-4">
+            <h3 class="font-display font-bold text-xl text-brand-green border-b pb-3">Send Us a Direct Message</h3>
+            <form action="#" method="post" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Your Full Name *</label>
+                    <input type="text" placeholder="Ram Kumar Shrestha" class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2 text-sm" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Mobile Phone Number (Nepal) *</label>
+                    <input type="tel" placeholder="98XXXXXXXX" class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2 text-sm tabular-nums" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Subject / Topic *</label>
+                    <select class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2 text-sm">
+                        <option>General Inquiry</option>
+                        <option>Order Inquiry or Delivery Status</option>
+                        <option>Vendor Registration &amp; Doorstep Visit</option>
+                        <option>Platform Feedback</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Message *</label>
+                    <textarea rows="4" placeholder="How can our local team assist you today?" class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2 text-sm" required></textarea>
+                </div>
+                <button type="submit" class="w-full bg-brand-green text-white font-display font-bold py-2.5 rounded-stall hover:brightness-110 transition shadow">
+                    Send Inquiry to Hetauda Team
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

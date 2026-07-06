@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Payment Failed — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-xl mx-auto bg-white p-8 rounded-stall border border-state-error/40 shadow-sm my-8 text-center space-y-6">
+    <div class="w-16 h-16 bg-state-error/20 text-state-error rounded-full flex items-center justify-center text-3xl mx-auto">
+        ❌
+    </div>
+    <div>
+        <h1 class="font-display font-bold text-2xl text-state-error">Digital Payment Unsuccessful</h1>
+        <p class="text-sm text-neutral-600 mt-2 leading-relaxed">
+            Your eSewa transaction could not be completed due to a temporary session timeout or insufficient balance. No charge was captured.
+        </p>
+    </div>
+    <div class="flex flex-col sm:flex-row justify-center gap-4 pt-2">
+        <a href="{% url 'orders:checkout' %}" class="bg-brand-green text-white font-display font-bold px-6 py-3 rounded-stall shadow">
+            Retry Digital Payment
+        </a>
+        <a href="{% url 'orders:order_confirmation' %}" class="bg-brand-marigold text-surface-ink font-display font-bold px-6 py-3 rounded-stall shadow">
+            Switch to Cash on Delivery (COD)
+        </a>
+    </div>
+</div>
+{% endblock %}

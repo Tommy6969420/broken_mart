@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}All Products — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <div class="flex flex-wrap justify-between items-center bg-white p-5 rounded-stall border border-neutral-200 shadow-sm gap-3">
+        <div>
+            <h1 class="font-display font-bold text-2xl text-brand-green">
+                {% if active_category %}{{ active_category.name }}{% else %}All Local Bazaar Products{% endif %}
+            </h1>
+            <p class="text-xs text-neutral-600 mt-0.5">
+                {{ page_obj.paginator.count }} approved listings • transparent pricing • verified sellers prioritized
+            </p>
+        </div>
+        <form method="get" class="flex items-center gap-3 text-sm">
+            {% if request.GET.category %}<input type="hidden" name="category" value="{{ request.GET.category }}">{% endif %}
+            <span>Sort by:</span>
+            <select name="sort" onchange="this.form.submit()" class="bg-surface-base border border-neutral-300 rounded-stall px-3 py-1.5 text-xs font-medium">
+                <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Newest First</option>
+                <option value="price_low" {% if current_sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                <option value="price_high" {% if current_sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                <option value="rating" {% if current_sort == 'rating' %}selected{% endif %}>Top Rated Sellers</option>
+                <option value="popular" {% if current_sort == 'popular' %}selected{% endif %}>Best Selling</option>
+                <option value="trust" {% if current_sort == 'trust' %}selected{% endif %}>Trust Score</option>
+            </select>
+            <label class="flex items-center gap-1 text-xs bg-surface-base border px-2 py-1 rounded-stall">
+                <input type="checkbox" name="verified" value="1" {% if request.GET.verified %}checked{% endif %} onchange="this.form.submit()"> Verified only
+            </label>
+        </form>
+    </div>
+
+    <!-- Grid — DYNAMIC -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {% for product in products %}
+        <div class="bg-white rounded-stall border border-neutral-200 overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition">
+            <div class="relative">
+                {% with img=product.images.first %}
+                {% if img %}<img src="{{ img.image.url }}" alt="{{ product.name }}" loading="lazy" class="w-full h-44 object-cover">{% else %}<div class="w-full h-44 bg-surface-base flex items-center justify-center text-3xl">🛍️</div>{% endif %}
+                {% endwith %}
+                <div class="absolute top-2 left-2 flex flex-col gap-1">
+                    {% if product.vendor.is_verified %}<span class="bg-brand-indigo text-white text-[10px] px-2 py-0.5 stall-flag font-bold">✓ Verified</span>{% endif %}
+                    {% if product.vendor.is_trusted_seller %}<span class="bg-state-success text-white text-[9px] px-2 py-0.5 rounded-full">★ Trusted</span>{% endif %}
+                </div>
+            </div>
+            <div class="p-4 space-y-2 flex-grow">
+                <div class="flex justify-between text-[11px] text-neutral-600">
+                    <span class="truncate">{{ product.vendor.shop_name }}</span>
+                    <span>Ward {{ product.vendor.shop_ward_number }} • {{ product.vendor.average_rating|floatformat:1 }}★</span>
+                </div>
+                <h3 class="font-display font-bold text-[15px] text-surface-ink line-clamp-2 h-10">{{ product.name }}</h3>
+                <div class="flex items-baseline gap-2">
+                    <span class="font-display font-bold text-lg text-brand-green tabular-nums">NPR {{ product.effective_price|floatformat:0 }}</span>
+                    {% if product.discounted_price %}<span class="text-xs line-through text-neutral-400">NPR {{ product.price|floatformat:0 }}</span>{% endif %}
+                </div>
+                <div class="text-[10px] text-neutral-500">Payable ~ NPR {{ product.pricing_breakdown.total_payable|floatformat:0 }} incl. VAT+ship</div>
+            </div>
+            <div class="px-4 pb-3">
+                <a href="{% url 'catalog:product_detail' slug=product.slug %}" class="block text-center bg-brand-green text-white py-2 rounded-stall text-xs font-display font-bold hover:brightness-110 w-full">View Details →</a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-4 bg-white p-10 rounded-stall border text-center">
+            <div class="text-4xl mb-2">🔍</div>
+            <h3 class="font-display font-bold text-lg">No products match filters</h3>
+            <p class="text-sm text-neutral-600">Try clearing filters or run <code>python seed.py</code></p>
+            <a href="{% url 'catalog:product_list' %}" class="text-brand-indigo underline text-sm">Clear filters</a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination — DYNAMIC -->
+    {% if is_paginated %}
+    <div class="flex justify-center items-center gap-2 pt-4 flex-wrap">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}&sort={{ current_sort }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.verified %}&verified=1{% endif %}" class="px-3 py-1.5 bg-white border border-neutral-300 rounded-stall text-xs hover:bg-neutral-100">← Previous</a>
+        {% else %}
+        <span class="px-3 py-1.5 bg-neutral-200 rounded-stall text-xs text-neutral-500 cursor-not-allowed">← Previous</span>
+        {% endif %}
+
+        <span class="px-3 py-1.5 bg-brand-green text-white rounded-stall text-xs font-bold">{{ page_obj.number }}</span>
+        <span class="text-xs text-neutral-500">/ {{ page_obj.paginator.num_pages }}</span>
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&sort={{ current_sort }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.verified %}&verified=1{% endif %}" class="px-3 py-1.5 bg-white border border-neutral-300 rounded-stall text-xs hover:bg-neutral-100">Next →</a>
+        {% endif %}
+    </div>
+    <p class="text-center text-[11px] text-neutral-500">Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} approved listings</p>
+    {% endif %}
+</div>
+{% endblock %}

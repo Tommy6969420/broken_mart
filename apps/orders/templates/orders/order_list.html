@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}My Orders History — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <h1 class="font-display font-bold text-3xl text-brand-green">My Order History &amp; Status Timelines</h1>
+
+    <div class="space-y-4">
+        <!-- Order Card 1 -->
+        <div class="bg-white p-6 rounded-stall border border-neutral-200 shadow-sm space-y-4">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b pb-3 text-sm">
+                <div>
+                    <span class="font-display font-bold text-lg text-surface-ink">Order #MM-2026-8492</span>
+                    <span class="text-xs text-neutral-500 ml-2 tabular-nums">July 04, 2026 at 2:15 PM</span>
+                </div>
+                <span class="bg-state-warning text-white text-xs font-bold px-3 py-1 rounded-full self-start">Out for Delivery (Rider Dispatched)</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+                <div>
+                    <strong class="text-brand-indigo block">Shrestha Cloth Store (Ward #4)</strong>
+                    <span>1x Traditional Cotton Kurta Set</span>
+                </div>
+                <span class="font-display font-bold text-lg tabular-nums">NPR 1,950</span>
+            </div>
+            <div class="pt-2 flex justify-between items-center border-t">
+                <a href="{% url 'orders:order_detail' order_id=8492 %}" class="bg-brand-green text-white px-4 py-2 rounded-stall font-display font-bold text-xs shadow">
+                    Track Granular Timeline &amp; Timestamps →
+                </a>
+                <a href="{% url 'support:complaint_form' %}" class="text-xs text-state-warning font-semibold underline">Raise Grievance</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,115 @@
+{% comment %}
+Marketplace Improvement — Customer Support
+Persistent support entry point on EVERY page + integrated ticketing / live chat
+LOGIN REQUIRED to send messages
+Posts to DB: SupportTicket -> TicketMessage
+Admin can read/respond via /admin/support/supportticket/
+{% endcomment %}
+<div x-data="{ supportOpen: false, chatOpen: false, tab: 'chat' }" class="fixed bottom-5 right-5 z-50">
+    <!-- Chat Panel -->
+    <div x-show="chatOpen" x-transition.opacity x-cloak
+         class="mb-3 w-80 sm:w-96 bg-white rounded-stall shadow-2xl border border-neutral-200 overflow-hidden"
+         @click.outside="chatOpen = false" style="display:none;">
+        <div class="bg-brand-green text-white p-3 flex justify-between items-center">
+            <div>
+                <div class="font-display font-bold text-sm flex items-center gap-2">
+                    <span class="w-2 h-2 bg-state-success rounded-full animate-pulse"></span>
+                    Makwanpur Mart Live Support
+                </div>
+                <div class="text-[11px] text-brand-marigold">Avg reply ~2 min • E-Commerce Act 2081</div>
+            </div>
+            <button @click="chatOpen=false" class="text-white text-xl px-1">×</button>
+        </div>
+
+        {% if user.is_authenticated %}
+        <div class="flex border-b text-xs font-bold bg-surface-base">
+            <button @click="tab='chat'" :class="tab==='chat' ? 'text-brand-green border-b-2 border-brand-green bg-white' : 'text-neutral-500'" class="flex-1 py-2">Live Chat</button>
+            <button @click="tab='ticket'" :class="tab==='ticket' ? 'text-brand-green border-b-2 border-brand-green bg-white' : 'text-neutral-500'" class="flex-1 py-2">Ticket</button>
+            <button @click="tab='help'" :class="tab==='help' ? 'text-brand-green border-b-2 border-brand-green bg-white' : 'text-neutral-500'" class="flex-1 py-2">Help</button>
+        </div>
+
+        <div x-show="tab==='chat'" class="h-72 flex flex-col">
+            <div id="chat-messages" class="flex-grow overflow-y-auto p-3 space-y-2 text-xs bg-surface-base"
+                 hx-get="{% url 'support:chat_messages' %}" hx-trigger="load, every 5s" hx-swap="innerHTML">
+                <div class="text-center text-neutral-500 py-6 text-[11px]">Loading secure thread…</div>
+            </div>
+            <form hx-post="{% url 'support:chat_send' %}" hx-target="#chat-messages" hx-swap="beforeend"
+                  hx-on::after-request="if(event.detail.successful) this.reset()"
+                  class="border-t p-2 bg-white flex gap-2">
+                {% csrf_token %}
+                <input type="text" name="message" required minlength="2" maxlength="2000"
+                       placeholder="Ask about order, return, seller…"
+                       class="flex-grow border rounded-stall px-3 py-2 text-xs bg-surface-base focus:border-brand-green outline-none">
+                <button class="bg-brand-green text-white px-3 rounded-stall text-xs font-bold">Send</button>
+            </form>
+            <div class="px-3 pb-2 text-[10px] text-neutral-500 bg-white flex justify-between">
+                <span>→ DB: SupportTicket / TicketMessage</span>
+                <span class="text-state-success font-bold">● Live</span>
+            </div>
+        </div>
+
+        <div x-show="tab==='ticket'" style="display:none" class="p-3 space-y-2 text-xs">
+            <div class="text-[11px] bg-brand-indigo/5 border p-2 rounded">Logged in: <strong>{{ user.email }}</strong></div>
+            <form method="post" action="{% url 'support:complaint_form' %}" class="space-y-2">
+                {% csrf_token %}
+                <select name="category" required class="w-full border rounded-stall px-2 py-1.5 bg-surface-base text-xs">
+                    <option value="product_issue">Product issue</option>
+                    <option value="delivery_issue">Delivery issue</option>
+                    <option value="payment_issue">Payment issue</option>
+                    <option value="other">Other</option>
+                </select>
+                <input name="subject" required maxlength="200" placeholder="Subject" class="w-full border rounded-stall px-2 py-1.5 bg-surface-base text-xs">
+                <textarea name="description" rows="3" required placeholder="Describe… order # helpful" class="w-full border rounded-stall px-2 py-1.5 bg-surface-base text-xs"></textarea>
+                <button class="w-full bg-brand-indigo text-white font-display font-bold py-2 rounded-stall text-xs">Create Ticket → DB</button>
+            </form>
+            <a href="{% url 'support:complaint_list' %}" class="block text-center text-[11px] text-brand-indigo underline">My tickets →</a>
+        </div>
+        {% else %}
+        <!-- GUEST — login required -->
+        <div class="p-6 text-center space-y-3">
+            <div class="text-3xl">🔒</div>
+            <h3 class="font-display font-bold text-base">Login required for Live Support</h3>
+            <p class="text-xs text-neutral-600">Chat posts to <code>SupportTicket → TicketMessage</code> so agents can read & respond. Login links tickets to your orders (E-Commerce Act 2081).</p>
+            <a href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}" class="block w-full bg-brand-green text-white font-display font-bold py-2 rounded-stall text-xs">Login to Chat →</a>
+            <a href="{% url 'accounts:register' %}" class="block w-full border border-brand-marigold py-2 rounded-stall text-xs font-bold">Create Free Account</a>
+            <a href="/accounts/google/login/" class="block w-full bg-white border border-neutral-300 py-2 rounded-stall text-xs flex items-center justify-center gap-2 hover:bg-surface-base">
+                <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                Continue with Google
+            </a>
+            <div class="text-[10px] text-neutral-500">Google OAuth via django-allauth — one-click signup</div>
+        </div>
+        {% endif %}
+
+        <div x-show="tab==='help'" {% if user.is_authenticated %}style="display:none"{% endif %} class="p-3 text-xs space-y-2 max-h-72 overflow-y-auto">
+            <a href="{% url 'support:help_center' %}" class="block p-2 bg-surface-base rounded border hover:border-brand-green">📚 Help Center</a>
+            <a href="{% url 'core:return_policy' %}" class="block p-2 bg-surface-base rounded border hover:border-brand-green">🛡️ Return Policy</a>
+            <a href="{% url 'orders:order_list' %}" class="block p-2 bg-surface-base rounded border hover:border-brand-green">📦 Track Orders</a>
+            <a href="{% url 'support:complaint_form' %}" class="block p-2 bg-state-warning/10 border border-brand-marigold rounded">⚖️ File Grievance</a>
+            <div class="text-[11px] text-neutral-600 pt-2 border-t">
+                Hetauda Office, Ward 4<br>☎ +977-57-XXXXXX • support@makwanpurmart.np
+            </div>
+            {% if user.is_staff %}
+            <div class="bg-brand-indigo text-white p-2 rounded text-[11px]">
+                <strong>Agent:</strong>
+                <a href="/admin/support/supportticket/" class="underline">Ticket Queue</a> •
+                <a href="{% url 'support:admin_complaint_queue' %}" class="underline">Grievances</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- FAB -->
+    <div class="flex flex-col items-end gap-2">
+        <div x-show="!chatOpen" class="bg-surface-ink text-white text-[11px] px-3 py-1.5 rounded-full shadow-lg animate-pulse">
+            {% if user.is_authenticated %}💬 Live support — tap to chat{% else %}🔒 Login for live chat{% endif %}
+        </div>
+        <button @click="chatOpen=!chatOpen" class="w-14 h-14 bg-brand-marigold text-surface-ink rounded-full shadow-xl hover:scale-105 transition flex items-center justify-center text-2xl border-2 border-white relative">
+            💬
+            <span class="absolute -top-1 -right-1 w-4 h-4 bg-state-success rounded-full border-2 border-white"></span>
+        </button>
+        <div class="text-[10px] bg-white/90 backdrop-blur px-2 py-0.5 rounded-full shadow border font-medium">
+            Support 24/7
+        </div>
+    </div>
+</div>
+<style>[x-cloak]{display:none!important}</style>

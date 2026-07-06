@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Cancel Order — Makwanpur Mart [Phase 2]{% endblock %}
+{% block content %}
+<div class="max-w-xl mx-auto bg-white p-8 rounded-stall border border-neutral-200 shadow-sm my-6 space-y-6">
+    <h1 class="font-display font-bold text-2xl text-state-error border-b pb-4">Request Order Cancellation</h1>
+    <form action="{% url 'orders:order_list' %}" method="post" class="space-y-4 text-sm">
+        <label class="block font-bold">Select Cancellation Reason *</label>
+        <div class="space-y-2">
+            <label class="flex items-center gap-2"><input type="radio" name="reason" checked> <span>Ordered by mistake / Changed mind</span></label>
+            <label class="flex items-center gap-2"><input type="radio" name="reason"> <span>Found cheaper at another stall</span></label>
+            <label class="flex items-center gap-2"><input type="radio" name="reason"> <span>Estimated delivery time is too slow</span></label>
+        </div>
+        <button type="submit" class="w-full bg-state-error text-white font-display font-bold py-3 rounded-stall shadow">Confirm Cancellation</button>
+    </form>
+</div>
+{% endblock %}

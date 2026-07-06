@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Submit Verified Review [Phase 2] — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto bg-white p-8 rounded-stall border border-neutral-200 shadow-sm my-6 space-y-6">
+    <div class="border-b pb-4">
+        <span class="inline-block bg-brand-indigo text-white text-xs px-2.5 py-0.5 stall-flag mb-1">Verified Purchase Only</span>
+        <h1 class="font-display font-bold text-2xl text-brand-green">Rate Your Purchase</h1>
+        <p class="text-xs text-neutral-500">Order #MM-8492 &bull; Traditional Cotton Kurta Set</p>
+    </div>
+    <form action="{% url 'catalog:product_detail' slug='kurta' %}" method="post" class="space-y-4 text-sm">
+        <div>
+            <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Star Rating (1 to 5) *</label>
+            <select required class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2 font-bold text-brand-marigold">
+                <option value="5">★★★★★ 5 - Excellent local quality & fast drop</option>
+                <option value="4">★★★★☆ 4 - Good quality</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-neutral-700 uppercase mb-1">Your Comment *</label>
+            <textarea rows="4" required placeholder="Describe your experience with the fabric and delivery speed..." class="w-full bg-surface-base border border-neutral-300 rounded-stall px-3 py-2"></textarea>
+        </div>
+        <button type="submit" class="w-full bg-brand-green text-white font-display font-bold py-3 rounded-stall shadow">Submit Verified Review</button>
+    </form>
+</div>
+{% endblock %}

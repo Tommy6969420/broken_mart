@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Platform Return & Replacement Policy — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto bg-white p-8 rounded-stall border border-neutral-200 shadow-sm space-y-6">
+    <div class="border-b pb-4 flex justify-between items-start">
+        <div>
+            <h1 class="font-display font-bold text-3xl text-brand-green">Platform Return &amp; Dispute Policy</h1>
+            <p class="text-sm text-neutral-600 mt-1">Our core competitive differentiator: transparent, fast local resolutions.</p>
+        </div>
+        <span class="bg-brand-marigold text-surface-ink font-display font-bold text-xs px-3 py-1 stall-flag">Differentiator</span>
+    </div>
+    <div class="space-y-6 text-sm text-neutral-700">
+        <div class="p-4 bg-surface-base rounded-stall border-l-4 border-brand-marigold">
+            <strong class="block font-display text-base text-surface-ink mb-1">Vendor-Specific Return Policies</strong>
+            Because Makwanpur Mart hosts 50+ independent Hetauda shopkeepers, every product displays the specific vendor's return window on its details page (typically 24 hours to 7 days).
+        </div>
+        <h3 class="font-display font-bold text-lg text-brand-green">How Doorstep Returns Work in Hetauda</h3>
+        <ol class="list-decimal list-inside space-y-2">
+            <li>Submit a <a href="{% url 'orders:return_request' order_id=1 %}" class="text-brand-indigo font-bold underline">Return Request</a> from your order history with a photo of the defect.</li>
+            <li>Once verified by the vendor, our local delivery rider picks up the item during their next ward run.</li>
+            <li>Instant replacement or refund is processed via eSewa/Khalti or COD adjustments.</li>
+        </ol>
+        <div class="pt-4 border-t">
+            <h4 class="font-display font-bold text-base text-surface-ink">Unresolved Disputes?</h4>
+            <p>If a vendor fails to honor their stated return policy, file a legal mediation request through our <a href="{% url 'support:complaint_form' %}" class="text-state-warning font-bold underline">Grievance Portal</a>.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

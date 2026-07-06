@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}My Wishlist — Makwanpur Mart{% endblock %}
+{% block content %}
+<div class="space-y-6 max-w-5xl mx-auto">
+    <div class="flex justify-between items-center">
+        <h1 class="font-display font-bold text-2xl text-brand-green">Saved Wishlist</h1>
+        <span class="text-xs bg-surface-base border px-3 py-1 rounded-full">{{ product_count|default:wishlist_items.count }} saved items</span>
+    </div>
+
+    {% if wishlist_items %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for item in wishlist_items %}
+        {% with product=item.product %}
+        <div class="bg-white rounded-stall border border-neutral-200 shadow-sm overflow-hidden flex flex-col">
+            <div class="h-40 bg-surface-base relative overflow-hidden">
+                {% with img=product.images.first %}
+                {% if img %}<img src="{{ img.image.url }}" alt="{{ product.name }}" loading="lazy" class="w-full h-full object-cover">{% else %}<div class="w-full h-full flex items-center justify-center text-3xl">🛍️</div>{% endif %}
+                {% endwith %}
+                {% if product.vendor.is_verified %}<span class="absolute top-2 left-2 bg-brand-indigo text-white text-[10px] px-2 py-0.5 stall-flag">✓ Verified</span>{% endif %}
+            </div>
+            <div class="p-4 space-y-2 flex-grow">
+                <div class="text-[11px] text-neutral-600">{{ product.vendor.shop_name }} • Ward {{ product.vendor.shop_ward_number }} • {{ product.vendor.average_rating|floatformat:1 }}★</div>
+                <h3 class="font-display font-bold text-base text-surface-ink line-clamp-2">{{ product.name }}</h3>
+                <div class="flex items-baseline gap-2">
+                    <span class="font-display font-bold text-lg text-brand-green tabular-nums">NPR {{ product.effective_price|floatformat:0 }}</span>
+                    {% if product.discounted_price %}<span class="text-xs line-through text-neutral-400">NPR {{ product.price|floatformat:0 }}</span>{% endif %}
+                </div>
+                <div class="text-[10px] text-neutral-500">Payable ~ NPR {{ product.pricing_breakdown.total_payable|floatformat:0 }} incl. VAT</div>
+            </div>
+            <div class="p-4 pt-0 space-y-2">
+                <form method="post" action="{% url 'orders:add_to_cart_ajax' %}" hx-post="{% url 'orders:add_to_cart_ajax' %}" hx-target="#wishlist-toast-{{ item.id }}" class="space-y-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                    <input type="hidden" name="quantity" value="1">
+                    <button class="w-full bg-brand-marigold text-surface-ink font-display font-bold py-2 rounded-stall text-xs shadow hover:brightness-105">
+                        Move to Cart 🛒
+                    </button>
+                    <div id="wishlist-toast-{{ item.id }}" class="text-[11px]"></div>
+                </form>
+                <div class="flex gap-2">
+                    <a href="{% url 'catalog:product_detail' slug=product.slug %}" class="flex-1 text-center border border-neutral-300 py-1.5 rounded-stall text-xs font-semibold hover:bg-surface-base">View</a>
+                    <button hx-post="{% url 'catalog:toggle_wishlist_ajax' %}" hx-vals='{"product_id":"{{ product.id }}"}' hx-target="closest .bg-white" hx-swap="outerHTML swap:0.3s"
+                            class="px-3 border border-state-error/30 text-state-error rounded-stall text-xs hover:bg-state-error/5">Remove</button>
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white p-12 rounded-stall border text-center space-y-4">
+        <div class="text-5xl">♡</div>
+        <h2 class="font-display font-bold text-xl text-surface-ink">Your wishlist is empty</h2>
+        <p class="text-sm text-neutral-600 max-w-md mx-auto">Save verified Hetauda products to buy later — get notified on price drops (Phase 3).</p>
+        <a href="{% url 'catalog:product_list' %}" class="inline-block bg-brand-green text-white font-display font-bold px-5 py-2 rounded-stall">Browse Bazaar →</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
