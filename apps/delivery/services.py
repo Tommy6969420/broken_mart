@@ -201,9 +201,10 @@ def complete_delivery(delivery_id: int, rider=None) -> tuple:
         
         # Check if all deliveries for the order are complete
         order = delivery.order
-        all_delivered = not order.delivery_set.exclude(
-            status=Delivery.Status.DELIVERED
-        ).exists()
+        # Use the correct related_name from Delivery.order
+        all_delivered = not Delivery.objects.filter(
+            order=order
+        ).exclude(status=Delivery.Status.DELIVERED).exists()
         
         if all_delivered:
             order.status = 'delivered'

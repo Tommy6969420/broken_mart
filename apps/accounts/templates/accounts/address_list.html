@@ -24,15 +24,15 @@
                     {% endif %}
                     <div class="flex gap-2 text-xs">
                         {% if not addr.is_default %}
-                        <form action="{% url 'accounts:address_set_default' address_id=addr.id %}" method="post" class="inline">
+                        <form action="{% url 'accounts:address_set_default' pk=addr.id %}" method="post" class="inline">
                             {% csrf_token %}
                             <button type="submit" class="text-neutral-500 hover:text-brand-green underline">Set as Default</button>
                         </form>
                         <span class="text-neutral-300">|</span>
                         {% endif %}
-                        <a href="{% url 'accounts:address_edit' address_id=addr.id %}" class="text-brand-indigo font-bold hover:underline">Edit</a>
+                        <a href="{% url 'accounts:address_edit' pk=addr.id %}" class="text-brand-indigo font-bold hover:underline">Edit</a>
                         <span class="text-neutral-300">|</span>
-                        <form action="{% url 'accounts:address_delete' address_id=addr.id %}" method="post" class="inline" onsubmit="return confirm('Delete this address?');">
+                        <form action="{% url 'accounts:address_delete' pk=addr.id %}" method="post" class="inline" onsubmit="return confirm('Delete this address?');">
                             {% csrf_token %}
                             <button type="submit" class="text-state-error hover:underline font-bold">Delete</button>
                         </form>

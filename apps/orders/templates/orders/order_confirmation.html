@@ -7,8 +7,8 @@
     </div>
     <div>
         <span class="bg-state-success text-white font-display font-bold text-xs px-3 py-1 rounded-full uppercase">Order Confirmed</span>
-        <h1 class="font-display font-bold text-3xl text-brand-green mt-2">Thank You, Ram! Order Placed Successfully.</h1>
-        <p class="text-sm text-neutral-600 mt-1">Human-Readable Reference Number: <strong class="text-surface-ink font-display text-lg tabular-nums">#MM-2026-8492</strong></p>
+        <h1 class="font-display font-bold text-3xl text-brand-green mt-2">Thank You, {{ order.customer.name }}! Order Placed Successfully.</h1>
+        <p class="text-sm text-neutral-600 mt-1">Human-Readable Reference Number: <strong class="text-surface-ink font-display text-lg tabular-nums">{{ order.id }}</strong></p>
     </div>
 
     <!-- Immediate Next Steps SMS Notice -->
@@ -21,7 +21,7 @@
     </div>
 
     <div class="flex justify-center gap-4 pt-4">
-        <a href="{% url 'orders:order_detail' order_id=8492 %}" class="bg-brand-green text-white font-display font-bold px-8 py-3 rounded-stall shadow-md hover:brightness-110 transition">
+        <a href="{% url 'orders:order_detail' order_id=order.id %}" class="bg-brand-green text-white font-display font-bold px-8 py-3 rounded-stall shadow-md hover:brightness-110 transition">
             View Live Status Timeline &amp; Timestamps
         </a>
         <a href="{% url 'core:home' %}" class="border border-neutral-300 text-surface-ink font-display font-bold px-6 py-3 rounded-stall">
